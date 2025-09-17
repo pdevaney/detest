@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pronto Subscription Extensions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    form {
+      display: inline-block;
+      text-align: left;
+    }
+    label, input, button {
+      display: block;
+      margin-bottom: 10px;
+    }
+    #response {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .loading {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h2>Pronto Subscription Extensions</h2>
+  <form id="apiForm">
+    <label for="password">API Key:</label>
+    <input type="password" id="password" required />
+
+    <label for="code">Code:</label>
+    <input type="text" id="code" required />
+
+    <label for="quantity">No of extension bundles (5 seats per bundle):</label>
+    <input type="text" id="quantity" required />
+
+    <button type="submit" id="submitBtn">Submit</button>
+  </form>
+
+  <p id="response"></p>
+
+  <script>
+    document.getElementById("apiForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const user = 'api-token';
+      const password = document.getElementById("password").value;
+      const code = document.getElementById("code").value;
+      const quantity = document.getElementById("quantity").value;
+
+      const apiUrl = "https://apim.eu.workato.com/206773_prontos/subscription_management-v1/add_extensions?";
+      const authHeader = "Basic " + btoa(user + ":" + password);
+      const pars = new URLSearchParams({ code: code, quantity: quantity });
+
+      const responseElement = document.getElementById("response");
+      const submitBtn = document.getElementById("submitBtn");
+
+      // Show loading message
+      responseElement.textContent = "⏳ Processing request...";
+      responseElement.className = "loading";
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch(apiUrl + pars, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "*/*",
+            "Authorization": authHeader
+          }
+        });
+
+        const result = await response.json();
+
+        // Extract the clearest message from nested or top-level fields
+        let cleanedMessage = "Unknown response";
+
+        if (result.response && typeof result.response.status === "string") {
+          cleanedMessage = result.response.status;
+        } else {
+          for (let key in result) {
+            if (typeof result[key] === "string") {
+              cleanedMessage = result[key].replace(/^"+|"+$/g, '');
+              break;
+            }
+          }
+        }
+
+        if (response.ok) {
+          responseElement.textContent = `✅ Success: ${cleanedMessage}`;
+          responseElement.className = "success";
+
+          // Clear code and quantity fields
+          document.getElementById("code").value = "";
+          document.getElementById("quantity").value = "";
+        } else {
+          responseElement.textContent = `❌ Error: ${cleanedMessage}`;
+          responseElement.className = "error";
+        }
+
+      } catch (error) {
+        responseElement.textContent = `❌ Error: ${error.message}`;
+        responseElement.className = "error";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
+
