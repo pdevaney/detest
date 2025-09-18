@@ -45,4 +45,51 @@
 
   <script>
     document.getElementById('dataForm').addEventListener('submit', async function(event) {
-      event.preventDefault(); // Stop normal fo
+      event.preventDefault(); // Stop normal form submission
+
+      // Collect form data
+      const date = document.getElementById('date').value;
+      const comment = document.getElementById('comment').value;
+
+      // Prepare the payload
+      const data = {
+        date: date,
+        comment: comment
+      };
+
+      // Prepare headers
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': 'YOUR_API_KEY_HERE',            // Replace with your actual API Key
+        'Authorization': 'Bearer YOUR_BEARER_TOKEN_HERE' // Replace with your Bearer Token
+      };
+
+      // Show request preview on screen
+      const requestInfo = {
+        method: 'POST',
+        url: 'https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user',
+        headers: headers,
+        body: data
+      };
+      document.getElementById('requestOutput').innerText = JSON.stringify(requestInfo, null, 2);
+
+      try {
+        // Send the actual request
+        const response = await fetch(requestInfo.url, {
+          method: requestInfo.method,
+          headers: requestInfo.headers,
+          body: JSON.stringify(requestInfo.body)
+        });
+
+        const result = await response.json();
+
+        // Display response
+        document.getElementById('response').innerText = 'Success: ' + JSON.stringify(result, null, 2);
+
+      } catch (error) {
+        document.getElementById('response').innerText = 'Error: ' + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
