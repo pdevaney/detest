@@ -46,95 +46,64 @@
 
   <div id="response" style="max-width: 600px; margin: 20px auto; text-align: center; color: green;"></div>
 
-  <script>
-    // Function to get iframe src
-    function getIframeSrc() {
-      try {
-        // Find the iframe in the parent window
-        const iframes = window.parent.document.getElementsByTagName('iframe');
-        for (let iframe of iframes) {
-          if (iframe.contentWindow === window) {
-            return iframe.getAttribute('src');
-          }
-        }
-      } catch (e) {
-        console.warn("Unable to access parent iframe src:", e);
-      }
-      return null;
+ <script>
+  // Get the iframe page's own URL (equivalent to the resolved iframe src)
+  const iframeSrc = window.location.href;
+
+  // Extract query parameters
+  function getQueryParamsFromSelf() {
+    const params = {};
+    const usp = new URLSearchParams(window.location.search);
+    for (const [key, value] of usp.entries()) {
+      params[key] = value;
     }
+    return params;
+  }
 
-    // Function to extract query parameters into an object
-    function getQueryParams(url) {
-      const params = {};
-      try {
-        const queryString = url.split('?')[1];
-        if (!queryString) return params;
+  document.getElementById('dataForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
 
-        const pairs = queryString.split('&');
-        for (let pair of pairs) {
-          const [key, value] = pair.split('=');
-          params[decodeURIComponent(key)] = decodeURIComponent(value || '');
-        }
-      } catch (e) {
-        console.warn("Error parsing query params:", e);
-      }
-      return params;
+    const date = document.getElementById('date').value;
+    const comment = document.getElementById('comment').value;
+    const formType = document.getElementById('form_type').value;
+
+    // Use self URL instead of parent access
+    const iframeParams = getQueryParamsFromSelf();
+
+    const data = {
+      date: date,
+      comment: comment,
+      form_type: formType,
+      iframe_src: iframeSrc,   // full URL of the form page as loaded in the iframe
+      ...iframeParams          // spread individual params into the payload
+    };
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'api-token': 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e'
+    };
+
+    const requestInfo = {
+      method: 'POST',
+      url: 'https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user',
+      headers: headers,
+      body: data
+    };
+    document.getElementById('requestOutput').innerText = JSON.stringify(requestInfo, null, 2);
+
+    try {
+      const response = await fetch(requestInfo.url, {
+        method: requestInfo.method,
+        headers: requestInfo.headers,
+        body: JSON.stringify(requestInfo.body)
+      });
+      const result = await response.json();
+      document.getElementById('response').innerText = 'Success: ' + JSON.stringify(result, null, 2);
+    } catch (error) {
+      document.getElementById('response').innerText = 'Error: ' + error.message;
     }
+  });
+</script>
 
-    document.getElementById('dataForm').addEventListener('submit', async function(event) {
-      event.preventDefault();
-
-      // Collect form data
-      const date = document.getElementById('date').value;
-      const comment = document.getElementById('comment').value;
-      const formType = document.getElementById('form_type').value;
-
-      // Get iframe src and its query parameters
-      const iframeSrc = getIframeSrc();
-      const iframeParams = iframeSrc ? getQueryParams(iframeSrc) : {};
-
-      // Build base payload
-      const data = {
-        date: date,
-        comment: comment,
-        form_type: formType,
-        iframe_src: iframeSrc
-      };
-
-      // Merge query parameters into payload
-      Object.assign(data, iframeParams);
-
-      // Prepare headers
-      const headers = {
-        'Content-Type': 'application/json',
-        'api-token': 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e'
-      };
-
-      // Show request preview
-      const requestInfo = {
-        method: 'POST',
-        url: 'https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user',
-        headers: headers,
-        body: data
-      };
-      document.getElementById('requestOutput').innerText = JSON.stringify(requestInfo, null, 2);
-
-      try {
-        // Send the request
-        const response = await fetch(requestInfo.url, {
-          method: requestInfo.method,
-          headers: requestInfo.headers,
-          body: JSON.stringify(requestInfo.body)
-        });
-
-        const result = await response.json();
-
-        // Display response
-        document.getElementById('response').innerText = 'Success: ' + JSON.stringify(result, null, 2);
-      } catch (error) {
-        document.getElementById('response').innerText = 'Error: ' + error.message;
-      }
-    });
-  </script>
 </body>
 </html>
