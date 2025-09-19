@@ -51,11 +51,13 @@
       // Collect form data
       const date = document.getElementById('date').value;
       const comment = document.getElementById('comment').value;
+       const type = document.getElementById('form_type').value;
 
       // Prepare the payload
       const data = {
         date: date,
-        comment: comment
+        comment: comment,
+        type: type
       };
 
       // Prepare headers
