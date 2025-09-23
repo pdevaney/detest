@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Submit Form with File Upload</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 30px;">
+
+  <form id="dataForm" style="max-width: 400px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;" enctype="multipart/form-data">
+    <h2 style="text-align: center; color: #333;">Submit Details</h2>
+
+    <!-- Hidden field for form_type -->
+    <input type="hidden" id="form_type" name="form_type" value="1">
+
+    <!-- Date Picker -->
+    <label for="date" style="display: block; margin-bottom: 8px; font-weight: bold;">Date:</label>
+    <input
+      type="date"
+      id="date"
+      name="date"
+      required
+      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+
+    <!-- Comment Field -->
+    <label for="comment" style="display: block; margin-bottom: 8px; font-weight: bold;">Comment:</label>
+    <textarea
+      id="comment"
+      name="comment"
+      rows="4"
+      placeholder="Enter your comments here..."
+      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+
+    <!-- File Upload Field -->
+    <label for="file" style="display: block; margin-bottom: 8px; font-weight: bold;">Upload File:</label>
+    <input
+      type="file"
+      id="file"
+      name="file"
+      style="width: 100%; margin-bottom: 15px;">
+
+    <!-- Submit Button -->
+    <button
+      type="submit"
+      style="width: 100%; padding: 10px; background-color: #007BFF; border: none; border-radius: 4px; color: white; font-size: 16px; cursor: pointer;">
+      Submit
+    </button>
+  </form>
+
+  <!-- Request Preview -->
+  <div id="requestPreview" style="max-width: 600px; margin: 20px auto; padding: 15px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px;">
+    <h3 style="margin-top: 0; text-align:center;">Request Preview</h3>
+    <pre id="requestOutput" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+  </div>
+
+  <div id="response" style="max-width: 600px; margin: 20px auto; text-align: center; color: green;"></div>
+
+  <script>
+    // Extract query parameters from the iframe's own URL
+    function getQueryParamsFromSelf() {
+      const params = {};
+      const usp = new URLSearchParams(window.location.search);
+      for (const [key, value] of usp.entries()) {
+        params[key] = value;
+      }
+      return params;
+    }
+
+    document.getElementById('dataForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      // Collect regular form data
+      const date = document.getElementById('date').value;
+      const comment = document.getElementById('comment').value;
+      const formType = document.getElementById('form_type').value;
+      const fileInput = document.getElementById('file');
+
+      // Use FormData for mixed text and file upload
+      const formData = new FormData();
+      formData.append('date', date);
+      formData.append('comment', comment);
+      formData.append('form_type', formType);
+
+      // If file selected, append it
+      if (fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      // Add query params from iframe URL
+      const iframeParams = getQueryParamsFromSelf();
+      for (const [key, value] of Object.entries(iframeParams)) {
+        formData.append(key, value);
+      }
+
+      // Show preview of what will be sent
+      const previewObj = {};
+      formData.forEach((value, key) => {
+        previewObj[key] = value instanceof File ? `File: ${value.name}` : value;
+      });
+      document.getElementById('requestOutput').innerText = JSON.stringify(previewObj, null, 2);
+
+      try {
+        // Send request without manually setting Content-Type
+        const response = await fetch('https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user', {
+          method: 'POST',
+          headers: {
+            'api-token': 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e'
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+        document.getElementById('response').innerText = 'Success: ' + JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.getElementById('response').innerText = 'Error: ' + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
