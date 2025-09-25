@@ -84,7 +84,7 @@
       return params;
     }
 
-    // Make iframe params available as a constant
+    // Make iframe params available as a constant (e.g., user_id, username, etc.)
     const iframeParams = getQueryParamsFromSelf();
 
     // ---- Candidate dropdown population ----
@@ -109,42 +109,34 @@
         const url = `${CANDIDATES_URL}?coach_id=${encodeURIComponent(coachId)}`;
         const res = await fetch(url, {
           method: 'GET',
-          headers: {
-            'api-token': API_TOKEN
-          }
+          headers: { 'api-token': API_TOKEN }
         });
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const data = await res.json();
-        // We’ll try to normalize a few possible shapes.
-        // Expected best case: [{ id, name }, ...] or [{ candidate_id, candidate_name }, ...]
-        // Fallback: [ "Alice", "Bob" ]
 
+        // Normalize response to [{id, name}, ...]
         const normalized = [];
         if (Array.isArray(data)) {
           for (const item of data) {
             if (item && typeof item === 'object') {
               const id = item.id ?? item.candidate_id ?? item.value ?? item.user_id ?? null;
-              const name = item.name ?? item.candidate_name ?? item.label ?? item.username ?? String(id ?? '');
-              if (id !== null) normalized.push({ id: String(id), name: String(name || id) });
-              else if (name) normalized.push({ id: String(name), name: String(name) });
+              const name = item.name ?? item.candidate_name ?? item.label ?? item.username ?? null;
+              if (id !== null && name !== null) normalized.push({ id: String(id), name: String(name) });
             } else if (typeof item === 'string' || typeof item === 'number') {
               normalized.push({ id: String(item), name: String(item) });
             }
           }
         } else if (data && typeof data === 'object' && Array.isArray(data.candidates)) {
-          // e.g. { candidates: [...] }
           for (const c of data.candidates) {
             const id = c.id ?? c.candidate_id ?? c.value ?? c.user_id ?? null;
-            const name = c.name ?? c.candidate_name ?? c.label ?? c.username ?? String(id ?? '');
-            if (id !== null) normalized.push({ id: String(id), name: String(name || id) });
+            const name = c.name ?? c.candidate_name ?? c.label ?? c.username ?? null;
+            if (id !== null && name !== null) normalized.push({ id: String(id), name: String(name) });
           }
         }
 
-        // Populate select
+        // Populate dropdown (show NAME, keep ID as value)
         select.innerHTML = '';
         if (normalized.length === 0) {
           select.innerHTML = '<option value="" disabled selected>No candidates found</option>';
@@ -154,8 +146,8 @@
           select.appendChild(new Option('Please select…', '', true, false));
           select.options[0].disabled = true;
           for (const c of normalized) {
-            const opt = new Option(c.name, c.id);
-            opt.setAttribute('data-name', c.name);
+            const opt = new Option(c.name, c.id);     // display = name, value = id
+            opt.setAttribute('data-name', c.name);     // store name for submission
             select.appendChild(opt);
           }
           help.style.color = '#666';
@@ -163,9 +155,8 @@
         }
       } catch (err) {
         select.innerHTML = '<option value="" disabled selected>Error loading candidates</option>';
-        const msg = (err && err.message) ? err.message : 'Unknown error';
         help.style.color = '#B00020';
-        help.textContent = 'Could not load candidates: ' + msg + '.';
+        help.textContent = 'Could not load candidates: ' + (err.message || 'Unknown error') + '.';
       } finally {
         select.disabled = false;
       }
@@ -175,70 +166,4 @@
     document.getElementById('dataForm').addEventListener('submit', async function(event) {
       event.preventDefault();
 
-      const date = document.getElementById('date').value;
-      const comment = document.getElementById('comment').value;
-      const formType = document.getElementById('form_type').value;
-      const fileInput = document.getElementById('file');
-      const candidateSelect = document.getElementById('candidate');
-
-      // Pull id and display name from the selected option
-      const candidateId = candidateSelect.value || '';
-      const candidateName = candidateSelect.selectedOptions[0]?.getAttribute('data-name') || '';
-
-      const formData = new FormData();
-      formData.append('date', date);
-      formData.append('comment', comment);
-      formData.append('form_type', formType);
-      formData.append('candidate_id', candidateId);
-      formData.append('candidate_name', candidateName);
-
-      // Add iframe URL params (user_id, username, etc.)
-      for (const [key, value] of Object.entries(iframeParams)) {
-        formData.append(key, value);
-      }
-
-      // Optional file
-      if (fileInput && fileInput.files.length > 0) {
-        formData.append('file', fileInput.files[0]);
-      }
-
-      // Preview (file shows as name only)
-      const previewObj = {};
-      formData.forEach((value, key) => {
-        previewObj[key] = value instanceof File ? `File: ${value.name}` : value;
-      });
-      document.getElementById('requestOutput').innerText = JSON.stringify(previewObj, null, 2);
-
-      // Disable submit during request
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting…';
-
-      try {
-        const response = await fetch(SUBMIT_URL, {
-          method: 'POST',
-          headers: { 'api-token': API_TOKEN }, // DO NOT set Content-Type with FormData
-          body: formData
-        });
-
-        const resultText = await response.text(); // handle non-JSON gracefully
-        let result;
-        try { result = JSON.parse(resultText); }
-        catch { result = resultText; }
-
-        document.getElementById('response').style.color = response.ok ? 'green' : '#B00020';
-        document.getElementById('response').innerText = (response.ok ? 'Success: ' : 'Error: ') + (typeof result === 'string' ? result : JSON.stringify(result, null, 2));
-      } catch (error) {
-        document.getElementById('response').style.color = '#B00020';
-        document.getElementById('response').innerText = 'Error: ' + error.message;
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit';
-      }
-    });
-
-    // Load candidates on page ready
-    document.addEventListener('DOMContentLoaded', loadCandidates);
-  </script>
-</body>
-</html>
+      const
