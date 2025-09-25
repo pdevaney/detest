@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Submit Form with File Upload & Candidate Dropdown</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 30px;">
+
+  <form id="dataForm" style="max-width: 420px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;" enctype="multipart/form-data">
+    <h2 style="text-align: center; color: #333; margin-top: 0;">Submit Details</h2>
+
+    <!-- Hidden field for form_type -->
+    <input type="hidden" id="form_type" name="form_type" value="1">
+
+    <!-- Date Picker -->
+    <label for="date" style="display: block; margin-bottom: 8px; font-weight: bold;">Date:</label>
+    <input
+      type="date"
+      id="date"
+      name="date"
+      required
+      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+
+    <!-- Comment Field -->
+    <label for="comment" style="display: block; margin-bottom: 8px; font-weight: bold;">Comment:</label>
+    <textarea
+      id="comment"
+      name="comment"
+      rows="4"
+      placeholder="Enter your comments here..."
+      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+
+    <!-- Candidate Dropdown (populated from API) -->
+    <label for="candidate" style="display: block; margin-bottom: 8px; font-weight: bold;">Candidate:</label>
+    <select
+      id="candidate"
+      name="candidate"
+      required
+      style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
+      <option value="" disabled selected>Loading candidates…</option>
+    </select>
+    <div id="candidateHelp" style="font-size: 12px; color: #666; margin-bottom: 15px;">
+      Please choose a candidate once the list loads.
+    </div>
+
+    <!-- File Upload Field (optional) -->
+    <label for="file" style="display: block; margin-bottom: 8px; font-weight: bold;">Upload File (optional):</label>
+    <input
+      type="file"
+      id="file"
+      name="file"
+      style="width: 100%; margin-bottom: 15px;">
+
+    <!-- Submit Button -->
+    <button
+      id="submitBtn"
+      type="submit"
+      style="width: 100%; padding: 10px; background-color: #007BFF; border: none; border-radius: 4px; color: white; font-size: 16px; cursor: pointer;">
+      Submit
+    </button>
+  </form>
+
+  <!-- Request Preview -->
+  <div id="requestPreview" style="max-width: 700px; margin: 20px auto; padding: 15px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px;">
+    <h3 style="margin-top: 0; text-align:center;">Request Preview</h3>
+    <pre id="requestOutput" style="white-space: pre-wrap; word-wrap: break-word; margin: 0;"></pre>
+  </div>
+
+  <div id="response" style="max-width: 700px; margin: 20px auto; text-align: center; color: green;"></div>
+
+  <script>
+    // ---- Config ----
+    const API_TOKEN = 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e';
+    const SUBMIT_URL = 'https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user';
+    const CANDIDATES_URL = 'https://apim.eu.workato.com/211941_directioneering/forms-v1/get_candidates';
+
+    // ---- Utilities ----
+    function getQueryParamsFromSelf() {
+      const params = {};
+      const usp = new URLSearchParams(window.location.search);
+      for (const [key, value] of usp.entries()) {
+        params[key] = value;
+      }
+      return params;
+    }
+
+    // Make iframe params available as a constant
+    const iframeParams = getQueryParamsFromSelf();
+
+    // ---- Candidate dropdown population ----
+    async function loadCandidates() {
+      const select = document.getElementById('candidate');
+      const help = document.getElementById('candidateHelp');
+
+      // Guard: ensure we have a user_id for coach_id
+      const coachId = iframeParams.user_id;
+      if (!coachId) {
+        select.innerHTML = '<option value="" disabled selected>Missing user_id in iframe URL</option>';
+        help.style.color = '#B00020';
+        help.textContent = 'Cannot load candidates: no user_id found in iframe query parameters.';
+        return;
+      }
+
+      // Show loading state
+      select.disabled = true;
+      select.innerHTML = '<option value="" disabled selected>Loading candidates…</option>';
+
+      try {
+        const url = `${CANDIDATES_URL}?coach_id=${encodeURIComponent(coachId)}`;
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'api-token': API_TOKEN
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        // We’ll try to normalize a few possible shapes.
+        // Expected best case: [{ id, name }, ...] or [{ candidate_id, candidate_name }, ...]
+        // Fallback: [ "Alice", "Bob" ]
+
+        const normalized = [];
+        if (Array.isArray(data)) {
+          for (const item of data) {
+            if (item && typeof item === 'object') {
+              const id = item.id ?? item.candidate_id ?? item.value ?? item.user_id ?? null;
+              const name = item.name ?? item.candidate_name ?? item.label ?? item.username ?? String(id ?? '');
+              if (id !== null) normalized.push({ id: String(id), name: String(name || id) });
+              else if (name) normalized.push({ id: String(name), name: String(name) });
+            } else if (typeof item === 'string' || typeof item === 'number') {
+              normalized.push({ id: String(item), name: String(item) });
+            }
+          }
+        } else if (data && typeof data === 'object' && Array.isArray(data.candidates)) {
+          // e.g. { candidates: [...] }
+          for (const c of data.candidates) {
+            const id = c.id ?? c.candidate_id ?? c.value ?? c.user_id ?? null;
+            const name = c.name ?? c.candidate_name ?? c.label ?? c.username ?? String(id ?? '');
+            if (id !== null) normalized.push({ id: String(id), name: String(name || id) });
+          }
+        }
+
+        // Populate select
+        select.innerHTML = '';
+        if (normalized.length === 0) {
+          select.innerHTML = '<option value="" disabled selected>No candidates found</option>';
+          help.style.color = '#B00020';
+          help.textContent = 'No candidates were returned for this coach.';
+        } else {
+          select.appendChild(new Option('Please select…', '', true, false));
+          select.options[0].disabled = true;
+          for (const c of normalized) {
+            const opt = new Option(c.name, c.id);
+            opt.setAttribute('data-name', c.name);
+            select.appendChild(opt);
+          }
+          help.style.color = '#666';
+          help.textContent = 'Please choose a candidate.';
+        }
+      } catch (err) {
+        select.innerHTML = '<option value="" disabled selected>Error loading candidates</option>';
+        const msg = (err && err.message) ? err.message : 'Unknown error';
+        help.style.color = '#B00020';
+        help.textContent = 'Could not load candidates: ' + msg + '.';
+      } finally {
+        select.disabled = false;
+      }
+    }
+
+    // ---- Submit handler ----
+    document.getElementById('dataForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const date = document.getElementById('date').value;
+      const comment = document.getElementById('comment').value;
+      const formType = document.getElementById('form_type').value;
+      const fileInput = document.getElementById('file');
+      const candidateSelect = document.getElementById('candidate');
+
+      // Pull id and display name from the selected option
+      const candidateId = candidateSelect.value || '';
+      const candidateName = candidateSelect.selectedOptions[0]?.getAttribute('data-name') || '';
+
+      const formData = new FormData();
+      formData.append('date', date);
+      formData.append('comment', comment);
+      formData.append('form_type', formType);
+      formData.append('candidate_id', candidateId);
+      formData.append('candidate_name', candidateName);
+
+      // Add iframe URL params (user_id, username, etc.)
+      for (const [key, value] of Object.entries(iframeParams)) {
+        formData.append(key, value);
+      }
+
+      // Optional file
+      if (fileInput && fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      // Preview (file shows as name only)
+      const previewObj = {};
+      formData.forEach((value, key) => {
+        previewObj[key] = value instanceof File ? `File: ${value.name}` : value;
+      });
+      document.getElementById('requestOutput').innerText = JSON.stringify(previewObj, null, 2);
+
+      // Disable submit during request
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
+      try {
+        const response = await fetch(SUBMIT_URL, {
+          method: 'POST',
+          headers: { 'api-token': API_TOKEN }, // DO NOT set Content-Type with FormData
+          body: formData
+        });
+
+        const resultText = await response.text(); // handle non-JSON gracefully
+        let result;
+        try { result = JSON.parse(resultText); }
+        catch { result = resultText; }
+
+        document.getElementById('response').style.color = response.ok ? 'green' : '#B00020';
+        document.getElementById('response').innerText = (response.ok ? 'Success: ' : 'Error: ') + (typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+      } catch (error) {
+        document.getElementById('response').style.color = '#B00020';
+        document.getElementById('response').innerText = 'Error: ' + error.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+      }
+    });
+
+    // Load candidates on page ready
+    document.addEventListener('DOMContentLoaded', loadCandidates);
+  </script>
+</body>
+</html>
