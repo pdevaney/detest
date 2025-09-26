@@ -166,4 +166,70 @@
     document.getElementById('dataForm').addEventListener('submit', async function(event) {
       event.preventDefault();
 
-      const
+      const date = document.getElementById('date').value;
+      const comment = document.getElementById('comment').value;
+      const formType = document.getElementById('form_type').value;
+      const fileInput = document.getElementById('file');
+      const candidateSelect = document.getElementById('candidate');
+
+      // Candidate values
+      const candidateId = candidateSelect.value || '';
+      const candidateName = candidateSelect.selectedOptions[0]?.getAttribute('data-name') || '';
+
+      const formData = new FormData();
+      formData.append('date', date);
+      formData.append('comment', comment);
+      formData.append('form_type', formType);
+      formData.append('candidate_id', candidateId);
+      formData.append('candidate_name', candidateName);
+
+      // Add iframe URL params (user_id, username, auth_code, hash, etc.)
+      for (const [key, value] of Object.entries(iframeParams)) {
+        formData.append(key, value);
+      }
+
+      // Optional file
+      if (fileInput && fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      // Preview (file shows as name only)
+      const previewObj = {};
+      formData.forEach((value, key) => {
+        previewObj[key] = value instanceof File ? `File: ${value.name}` : value;
+      });
+      document.getElementById('requestOutput').innerText = JSON.stringify(previewObj, null, 2);
+
+      // Disable submit during request
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
+      try {
+        const response = await fetch(SUBMIT_URL, {
+          method: 'POST',
+          headers: { 'api-token': API_TOKEN }, // don't set Content-Type; FormData handles it
+          body: formData
+        });
+
+        const resultText = await response.text(); // tolerate non-JSON
+        let result;
+        try { result = JSON.parse(resultText); } catch { result = resultText; }
+
+        document.getElementById('response').style.color = response.ok ? 'green' : '#B00020';
+        document.getElementById('response').innerText =
+          (response.ok ? 'Success: ' : 'Error: ') + (typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+      } catch (error) {
+        document.getElementById('response').style.color = '#B00020';
+        document.getElementById('response').innerText = 'Error: ' + error.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+      }
+    });
+
+    // Load candidates on page ready
+    document.addEventListener('DOMContentLoaded', loadCandidates);
+  </script>
+</body>
+</html>
