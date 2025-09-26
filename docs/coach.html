@@ -2,12 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Submit Form with File Upload & Candidate Dropdown</title>
+  <title>Submit Form with File Upload & Candidate Dropdown (with Debug)</title>
 </head>
 <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 30px;">
 
   <form id="dataForm" style="max-width: 420px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;" enctype="multipart/form-data">
-    <h2 style="text-align: center; color: #333; margin-top: 0;">Submit Detailsyyy</h2>
+    <h2 style="text-align: center; color: #333; margin-top: 0;">Submit Detailszzzz</h2>
 
     <!-- Hidden field for form_type -->
     <input type="hidden" id="form_type" name="form_type" value="1">
@@ -93,26 +93,56 @@
       return params;
     }
 
+    // (Left for safety; not strictly needed now that backend removed '+')
+    function cleanName(s) {
+      if (s == null) return '';
+      return decodeURIComponent(String(s).replace(/\+/g, ' '));
+    }
+
     // Make iframe params available as a constant (e.g., user_id, username, etc.)
     const iframeParams = getQueryParamsFromSelf();
 
-    // Try to find an array of candidates within a variety of shapes
+    // Normalise candidates to [{id, name}, ...]
     function normaliseCandidates(payload) {
       const out = [];
+
       const pushPair = (id, name) => {
         if (id == null && name == null) return;
         const sid = id != null ? String(id) : (name != null ? String(name) : '');
-        const sname = name != null ? String(name) : sid;
+        const sname = name != null ? cleanName(name) : sid;
         out.push({ id: sid, name: sname });
       };
 
       const coerceObj = (obj) => {
         if (!obj || typeof obj !== 'object') return;
-        const id   = obj.id ?? obj.candidate_id ?? obj.value ?? obj.user_id ?? obj.uid ?? null;
-        const name = obj.name ?? obj.candidate_name ?? obj.label ?? obj.username ?? obj.full_name ?? null;
+        const id =
+          obj.id ??
+          obj.candidate_id ??
+          obj.value ??
+          obj.user_id ??
+          obj.uid ??
+          null;
+
+        // NOTE: we specifically support 'fullname' here
+        const name =
+          obj.name ??
+          obj.fullname ??
+          obj.candidate_name ??
+          obj.label ??
+          obj.username ??
+          obj.full_name ??
+          null;
+
         if (id != null || name != null) pushPair(id, name);
       };
 
+      // Prefer the known key returned by your backend: { candidates: [...] }
+      if (payload && typeof payload === 'object' && Array.isArray(payload.candidates)) {
+        for (const c of payload.candidates) coerceObj(c);
+        return out;
+      }
+
+      // Otherwise, scan generically
       const maybeArrays = [];
       if (Array.isArray(payload)) maybeArrays.push(payload);
       if (payload && typeof payload === 'object') {
@@ -122,7 +152,6 @@
       }
 
       if (maybeArrays.length === 0) {
-        // single object?
         if (payload && typeof payload === 'object') coerceObj(payload);
       } else {
         for (const arr of maybeArrays) {
@@ -177,7 +206,6 @@
         try { data = text ? JSON.parse(text) : null; }
         catch { data = null; }
 
-        // Normalise to [{id,name},...]
         const normalized = normaliseCandidates(data);
         dbgParsed.textContent = JSON.stringify(normalized, null, 2);
 
@@ -191,8 +219,8 @@
           select.appendChild(new Option('Please select…', '', true, false));
           select.options[0].disabled = true;
           for (const c of normalized) {
-            const opt = new Option(c.name, c.id);
-            opt.setAttribute('data-name', c.name);
+            const opt = new Option(c.name, c.id);  // display name, value id
+            opt.setAttribute('data-name', c.name); // keep name for submission
             select.appendChild(opt);
           }
           help.style.color = '#666';
@@ -239,7 +267,7 @@
         formData.append('file', fileInput.files[0]);
       }
 
-      // Preview
+      // Preview (file shows as name only)
       const previewObj = {};
       formData.forEach((value, key) => {
         previewObj[key] = value instanceof File ? `File: ${value.name}` : value;
@@ -253,11 +281,11 @@
       try {
         const response = await fetch(SUBMIT_URL, {
           method: 'POST',
-          headers: { 'api-token': API_TOKEN }, // FormData sets content-type
+          headers: { 'api-token': API_TOKEN }, // don't set Content-Type with FormData
           body: formData
         });
 
-        const resultText = await response.text();
+        const resultText = await response.text(); // tolerate non-JSON
         let result;
         try { result = JSON.parse(resultText); } catch { result = resultText; }
 
@@ -273,6 +301,7 @@
       }
     });
 
+    // Load candidates on page ready
     document.addEventListener('DOMContentLoaded', loadCandidates);
   </script>
 </body>
