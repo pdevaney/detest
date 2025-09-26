@@ -2,12 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Submit Form with File Upload</title>
+  <title>Submit Form with File Upload & Candidate Dropdown (with Debug)</title>
 </head>
 <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 30px;">
 
-  <form id="dataForm" style="max-width: 400px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;" enctype="multipart/form-data">
-    <h2 style="text-align: center; color: #333;">Submit Details</h2>
+  <form id="dataForm" style="max-width: 420px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;" enctype="multipart/form-data">
+    <h2 style="text-align: center; color: #333; margin-top: 0;">Submit Details</h2>
 
     <!-- Hidden field for form_type -->
     <input type="hidden" id="form_type" name="form_type" value="1">
@@ -30,8 +30,21 @@
       placeholder="Enter your comments here..."
       style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
 
-    <!-- File Upload Field -->
-    <label for="file" style="display: block; margin-bottom: 8px; font-weight: bold;">Upload File:</label>
+    <!-- Candidate Dropdown (populated from API) -->
+    <label for="candidate" style="display: block; margin-bottom: 8px; font-weight: bold;">Candidate:</label>
+    <select
+      id="candidate"
+      name="candidate"
+      required
+      style="width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid #ccc; border-radius: 4px;">
+      <option value="" disabled selected>Loading candidates…</option>
+    </select>
+    <div id="candidateHelp" style="font-size: 12px; color: #666; margin-bottom: 15px;">
+      Please choose a candidate once the list loads.
+    </div>
+
+    <!-- File Upload Field (optional) -->
+    <label for="file" style="display: block; margin-bottom: 8px; font-weight: bold;">Upload File (optional):</label>
     <input
       type="file"
       id="file"
@@ -40,6 +53,7 @@
 
     <!-- Submit Button -->
     <button
+      id="submitBtn"
       type="submit"
       style="width: 100%; padding: 10px; background-color: #007BFF; border: none; border-radius: 4px; color: white; font-size: 16px; cursor: pointer;">
       Submit
@@ -47,73 +61,220 @@
   </form>
 
   <!-- Request Preview -->
-  <div id="requestPreview" style="max-width: 600px; margin: 20px auto; padding: 15px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px;">
+  <div id="requestPreview" style="max-width: 760px; margin: 20px auto; padding: 15px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px;">
     <h3 style="margin-top: 0; text-align:center;">Request Preview</h3>
-    <pre id="requestOutput" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+    <div><strong>POST URL:</strong> <span id="reqUrl"></span></div>
+    <pre id="requestOutput" style="white-space: pre-wrap; word-wrap: break-word; margin: 10px 0 0;"></pre>
   </div>
 
-  <div id="response" style="max-width: 600px; margin: 20px auto; text-align: center; color: green;"></div>
+  <!-- Candidates Load Debug -->
+  <div id="debugBox" style="max-width: 760px; margin: 20px auto; padding: 15px; background: #fffbe6; border: 1px solid #e0c97f; border-radius: 8px;">
+    <h3 style="margin-top: 0; text-align:center;">Candidates Debug</h3>
+    <div><strong>GET URL:</strong> <span id="dbgUrl"></span></div>
+    <div><strong>Status:</strong> <span id="dbgStatus"></span></div>
+    <div><strong>Raw Body:</strong></div>
+    <pre id="dbgBody" style="white-space: pre-wrap; word-wrap: break-word; margin: 0;"></pre>
+    <div style="margin-top:10px;"><strong>Parsed Preview:</strong></div>
+    <pre id="dbgParsed" style="white-space: pre-wrap; word-wrap: break-word; margin: 0;"></pre>
+  </div>
+
+  <div id="response" style="max-width: 760px; margin: 20px auto; text-align: center; color: green;"></div>
 
   <script>
-    // Extract query parameters from the iframe's own URL
+    // ---- Config ----
+    const API_TOKEN   = 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e';
+    const SUBMIT_URL  = 'https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user';
+    const CAND_URL    = 'https://apim.eu.workato.com/211941_directioneering/forms-v1/get_candidates';
+
+    // ---- Utilities ----
     function getQueryParamsFromSelf() {
       const params = {};
       const usp = new URLSearchParams(window.location.search);
-      for (const [key, value] of usp.entries()) {
-        params[key] = value;
-      }
+      for (const [key, value] of usp.entries()) params[key] = value;
       return params;
     }
 
+    function buildUrlWithParams(baseUrl, paramsObj) {
+      const usp = new URLSearchParams(paramsObj);
+      const qs = usp.toString();
+      if (!qs) return baseUrl;
+      return baseUrl + (baseUrl.includes('?') ? '&' : '?') + qs;
+    }
+
+    // Make iframe params available as a constant (e.g., user_id, username, auth_code, hash, etc.)
+    const iframeParams = getQueryParamsFromSelf();
+
+    // Normalise candidates to [{id, name}, ...]
+    function normaliseCandidates(payload) {
+      const out = [];
+      const pushPair = (id, name) => {
+        if (id == null && name == null) return;
+        out.push({ id: String(id ?? name ?? ''), name: String(name ?? id ?? '') });
+      };
+      const coerceObj = (obj) => {
+        if (!obj || typeof obj !== 'object') return;
+        const id   = obj.id ?? obj.candidate_id ?? obj.value ?? obj.user_id ?? obj.uid ?? null;
+        const name = obj.fullname ?? obj.name ?? obj.candidate_name ?? obj.label ?? obj.username ?? obj.full_name ?? null;
+        if (id != null || name != null) pushPair(id, name);
+      };
+      if (payload && typeof payload === 'object' && Array.isArray(payload.candidates)) {
+        for (const c of payload.candidates) coerceObj(c);
+        return out;
+      }
+      if (Array.isArray(payload)) {
+        for (const item of payload) (typeof item === 'string' || typeof item === 'number') ? pushPair(item, item) : coerceObj(item);
+        return out;
+      }
+      if (payload && typeof payload === 'object') {
+        for (const k of Object.keys(payload)) if (Array.isArray(payload[k])) for (const item of payload[k]) (typeof item === 'string' || typeof item === 'number') ? pushPair(item, item) : coerceObj(item);
+        coerceObj(payload);
+      }
+      return out;
+    }
+
+    // ---- Candidate dropdown population ----
+    async function loadCandidates() {
+      const select = document.getElementById('candidate');
+      const help   = document.getElementById('candidateHelp');
+      const dbgUrl    = document.getElementById('dbgUrl');
+      const dbgStatus = document.getElementById('dbgStatus');
+      const dbgBody   = document.getElementById('dbgBody');
+      const dbgParsed = document.getElementById('dbgParsed');
+
+      const coachId = iframeParams.user_id;
+      if (!coachId) {
+        select.innerHTML = '<option value="" disabled selected>Missing user_id in iframe URL</option>';
+        help.style.color = '#B00020';
+        help.textContent = 'Cannot load candidates: no user_id found in iframe query parameters.';
+        dbgUrl.textContent = '(skipped — no user_id)';
+        dbgStatus.textContent = '-';
+        dbgBody.textContent = '(no request made)';
+        dbgParsed.textContent = '(n/a)';
+        return;
+      }
+
+      select.disabled = true;
+      select.innerHTML = '<option value="" disabled selected>Loading candidates…</option>';
+
+      const url = `${CAND_URL}?coach_id=${encodeURIComponent(coachId)}`;
+      dbgUrl.textContent = url;
+
+      try {
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: { 'api-token': API_TOKEN }
+        });
+        dbgStatus.textContent = `${res.status} ${res.statusText}`;
+
+        const text = await res.text();
+        dbgBody.textContent = text || '(empty body)';
+
+        let data;
+        try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+        const normalized = normaliseCandidates(data);
+        dbgParsed.textContent = JSON.stringify(normalized, null, 2);
+
+        // Populate dropdown (show NAME, keep ID as value)
+        select.innerHTML = '';
+        if (!Array.isArray(normalized) || normalized.length === 0) {
+          select.innerHTML = '<option value="" disabled selected>No candidates found</option>';
+          help.style.color = '#B00020';
+          help.textContent = 'No candidates were returned (or response shape not recognised). See debug above.';
+        } else {
+          select.appendChild(new Option('Please select…', '', true, false));
+          select.options[0].disabled = true;
+          for (const c of normalized) {
+            const opt = new Option(c.name, c.id);
+            opt.setAttribute('data-name', c.name);
+            select.appendChild(opt);
+          }
+          help.style.color = '#666';
+          help.textContent = 'Please choose a candidate.';
+        }
+      } catch (err) {
+        select.innerHTML = '<option value="" disabled selected>Error loading candidates</option>';
+        help.style.color = '#B00020';
+        help.textContent = 'Could not load candidates: ' + (err.message || 'Unknown error') + '.';
+        dbgStatus.textContent = 'Fetch error';
+        dbgBody.textContent = String(err);
+        dbgParsed.textContent = '(n/a)';
+      } finally {
+        select.disabled = false;
+      }
+    }
+
+    // ---- Submit handler ----
     document.getElementById('dataForm').addEventListener('submit', async function(event) {
       event.preventDefault();
 
-      // Collect regular form data
       const date = document.getElementById('date').value;
       const comment = document.getElementById('comment').value;
       const formType = document.getElementById('form_type').value;
       const fileInput = document.getElementById('file');
+      const candidateSelect = document.getElementById('candidate');
 
-      // Use FormData for mixed text and file upload
+      const candidateId = candidateSelect.value || '';
+      const candidateName = candidateSelect.selectedOptions[0]?.getAttribute('data-name') || '';
+
+      // Build FormData body
       const formData = new FormData();
       formData.append('date', date);
       formData.append('comment', comment);
       formData.append('form_type', formType);
+      formData.append('candidate_id', candidateId);
+      formData.append('candidate_name', candidateName);
 
-      // If file selected, append it
-      if (fileInput.files.length > 0) {
-        formData.append('file', fileInput.files[0]);
-      }
-
-      // Add query params from iframe URL
-      const iframeParams = getQueryParamsFromSelf();
+      // Add iframe URL params to BODY as well
       for (const [key, value] of Object.entries(iframeParams)) {
         formData.append(key, value);
       }
 
-      // Show preview of what will be sent
+      // Optional file
+      if (fileInput && fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      // Also add iframe URL params to the QUERY STRING (so they appear as “request parameters”)
+      const submitUrl = buildUrlWithParams(SUBMIT_URL, iframeParams);
+      document.getElementById('reqUrl').textContent = submitUrl;
+
+      // Preview (file shows as name only)
       const previewObj = {};
       formData.forEach((value, key) => {
         previewObj[key] = value instanceof File ? `File: ${value.name}` : value;
       });
       document.getElementById('requestOutput').innerText = JSON.stringify(previewObj, null, 2);
 
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
       try {
-        // Send request without manually setting Content-Type
-        const response = await fetch('https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user', {
+        const response = await fetch(submitUrl, {
           method: 'POST',
-          headers: {
-            'api-token': 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e'
-          },
+          headers: { 'api-token': API_TOKEN }, // don't set Content-Type; FormData does it
           body: formData
         });
 
-        const result = await response.json();
-        document.getElementById('response').innerText = 'Success: ' + JSON.stringify(result, null, 2);
+        const resultText = await response.text(); // tolerate non-JSON
+        let result;
+        try { result = JSON.parse(resultText); } catch { result = resultText; }
+
+        document.getElementById('response').style.color = response.ok ? 'green' : '#B00020';
+        document.getElementById('response').innerText =
+          (response.ok ? 'Success: ' : 'Error: ') + (typeof result === 'string' ? result : JSON.stringify(result, null, 2));
       } catch (error) {
+        document.getElementById('response').style.color = '#B00020';
         document.getElementById('response').innerText = 'Error: ' + error.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
       }
     });
+
+    // Load candidates on page ready
+    document.addEventListener('DOMContentLoaded', loadCandidates);
   </script>
 </body>
 </html>
