@@ -7,8 +7,6 @@
 <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 30px;">
 
   <form id="dataForm" style="max-width: 400px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;">
-    <!-- Removed the title -->
-
     <!-- Hidden field for form_type -->
     <input type="hidden" id="form_type" name="form_type" value="1">
 
@@ -26,6 +24,21 @@
       <option>Executive Alumni Network</option>
       <option>Self Employment Advisory</option>
       <option>Executive Personal Branding</option>
+    </select>
+
+    <!-- Region Dropdown -->
+    <label for="region" style="display: block; margin-bottom: 8px; font-weight: bold;">Region:</label>
+    <select
+      id="region"
+      name="region"
+      required
+      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+      <option value="" disabled selected>Select region…</option>
+      <option>NSW</option>
+      <option>VIC</option>
+      <option>WA</option>
+      <option>NZ</option>
+      <option>SA</option>
     </select>
 
     <!-- Comment Field -->
@@ -53,74 +66,74 @@
 
   <div id="response" style="max-width: 600px; margin: 20px auto; text-align: center; color: green;"></div>
 
- <script>
-  // Get the iframe page's own URL (equivalent to the resolved iframe src)
-  const iframeSrc = window.location.href;
+  <script>
+    // Get iframe page's own URL (equivalent to the resolved iframe src)
+    const iframeSrc = window.location.href;
 
-  // Extract query parameters from this page's URL (i.e., from the iframe src)
-  function getQueryParamsFromSelf() {
-    const params = {};
-    const usp = new URLSearchParams(window.location.search);
-    for (const [key, value] of usp.entries()) {
-      params[key] = value;
+    // Extract query parameters from the iframe src
+    function getQueryParamsFromSelf() {
+      const params = {};
+      const usp = new URLSearchParams(window.location.search);
+      for (const [key, value] of usp.entries()) {
+        params[key] = value;
+      }
+      return params;
     }
-    return params;
-  }
 
-  document.getElementById('dataForm').addEventListener('submit', async function (event) {
-    event.preventDefault();
+    document.getElementById('dataForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
 
-    // Removed date entirely
-    const comment = document.getElementById('comment').value;
-    const formType = document.getElementById('form_type').value;
-    const specialistPanel = document.getElementById('specialist_panel').value;
+      const comment = document.getElementById('comment').value;
+      const formType = document.getElementById('form_type').value;
+      const specialistPanel = document.getElementById('specialist_panel').value;
+      const region = document.getElementById('region').value;
 
-    // Use self URL instead of parent access
-    const iframeParams = getQueryParamsFromSelf();
+      // Use self URL instead of parent access
+      const iframeParams = getQueryParamsFromSelf();
 
-    const data = {
-      comment: comment,
-      form_type: formType,
-      specialist_panel: specialistPanel,
-      iframe_src: iframeSrc,   // full URL of the form page as loaded in the iframe
-      ...iframeParams          // spread individual params into the payload
-    };
+      const data = {
+        comment: comment,
+        form_type: formType,
+        specialist_panel: specialistPanel,
+        region: region,
+        iframe_src: iframeSrc,
+        ...iframeParams
+      };
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'api-token': 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e'
-    };
+      const headers = {
+        'Content-Type': 'application/json',
+        'api-token': 'b29cb591b18d49c56dc73e58f63dc88daa0e09c046db416a0f5e9e2f3361b72e'
+      };
 
-    const requestInfo = {
-      method: 'POST',
-      url: 'https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user',
-      headers: headers,
-      body: data
-    };
-    document.getElementById('requestOutput').innerText = JSON.stringify(requestInfo, null, 2);
+      const requestInfo = {
+        method: 'POST',
+        url: 'https://apim.eu.workato.com/211941_directioneering/forms-v1/email-_user',
+        headers: headers,
+        body: data
+      };
 
-    try {
-      const response = await fetch(requestInfo.url, {
-        method: requestInfo.method,
-        headers: requestInfo.headers,
-        body: JSON.stringify(requestInfo.body)
-      });
+      document.getElementById('requestOutput').innerText = JSON.stringify(requestInfo, null, 2);
 
-      // Tolerate non-JSON replies gracefully
-      const text = await response.text();
-      let result;
-      try { result = JSON.parse(text); } catch (e) { result = text; }
+      try {
+        const response = await fetch(requestInfo.url, {
+          method: requestInfo.method,
+          headers: requestInfo.headers,
+          body: JSON.stringify(requestInfo.body)
+        });
 
-      document.getElementById('response').style.color = response.ok ? 'green' : '#B00020';
-      document.getElementById('response').innerText =
-        (response.ok ? 'Success: ' : 'Error: ') + (typeof result === 'string' ? result : JSON.stringify(result, null, 2));
-    } catch (error) {
-      document.getElementById('response').style.color = '#B00020';
-      document.getElementById('response').innerText = 'Error: ' + error.message;
-    }
-  });
-</script>
+        const text = await response.text();
+        let result;
+        try { result = JSON.parse(text); } catch { result = text; }
 
+        document.getElementById('response').style.color = response.ok ? 'green' : '#B00020';
+        document.getElementById('response').innerText =
+          (response.ok ? 'Success: ' : 'Error: ') +
+          (typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+      } catch (error) {
+        document.getElementById('response').style.color = '#B00020';
+        document.getElementById('response').innerText = 'Error: ' + error.message;
+      }
+    });
+  </script>
 </body>
 </html>
-
