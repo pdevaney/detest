@@ -92,9 +92,8 @@
 
         const responseDiv = document.getElementById('response');
         responseDiv.style.color = response.ok ? 'green' : '#B00020';
-        responseDiv.innerText =
-          (response.ok ? 'Success: ' : 'Error: ') +
-          (typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+        responseDiv.innerText = 'Request sent';
+         
       } catch (error) {
         const responseDiv = document.getElementById('response');
         responseDiv.style.color = '#B00020';
