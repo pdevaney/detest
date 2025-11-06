@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Enroll Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body style="font-family: Arial, sans-serif; background:#f9f9f9; padding:30px;">
+
+  <form id="enrollForm"
+        style="max-width: 520px; margin: 0 auto; background:#fff; border:1px solid #ddd; border-radius:8px; padding:20px; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+    <h2 style="margin:0 0 12px; color:#333; font-size:20px;">Enrollment</h2>
+    <p style="margin:0 0 16px; color:#555; font-size:14px;">Start typing a name and choose from the suggestions. Then select one or more courses and submit.</p>
+
+    <!-- Name (with autocomplete from list, and strict validation) -->
+    <label for="name" style="display:block; font-weight:bold; margin:12px 0 6px; color:#333;">Name</label>
+    <input id="name" name="name" list="nameOptions" autocomplete="off" required
+           placeholder="Start typing a name..."
+           style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;" />
+    <datalist id="nameOptions"></datalist>
+    <div id="nameHelp" style="color:#777; font-size:12px; margin-top:6px;">
+      Only names from the list are accepted.
+    </div>
+
+    <!-- Courses (checkbox list) -->
+    <fieldset style="margin:18px 0 10px; border:0; padding:0;">
+      <legend style="font-weight:bold; color:#333; margin-bottom:8px;">Courses</legend>
+
+      <label style="display:block; margin:6px 0;">
+        <input type="checkbox" name="courses" value="Course A" /> Course A
+      </label>
+      <label style="display:block; margin:6px 0;">
+        <input type="checkbox" name="courses" value="Course B" /> Course B
+      </label>
+      <label style="display:block; margin:6px 0;">
+        <input type="checkbox" name="courses" value="Course C" /> Course C
+      </label>
+      <label style="display:block; margin:6px 0;">
+        <input type="checkbox" name="courses" value="Course D" /> Course D
+      </label>
+      <label style="display:block; margin:6px 0;">
+        <input type="checkbox" name="courses" value="Course E" /> Course E
+      </label>
+
+      <div id="courseHelp" style="color:#777; font-size:12px; margin-top:6px;">
+        You can select one or more.
+      </div>
+    </fieldset>
+
+    <!-- Submit -->
+    <button type="submit"
+            style="margin-top:10px; width:100%; padding:10px; background:#007BFF; color:#fff; border:none; border-radius:4px; font-size:16px; cursor:pointer;">
+      Submit
+    </button>
+
+    <!-- Validation / Result -->
+    <div id="msg"
+         style="margin-top:14px; padding:10px; border-radius:6px; display:none;"></div>
+  </form>
+
+  <script>
+    // Hard-coded names (change to suit)
+    const ALLOWED_NAMES = [
+      'Alice Johnson',
+      'Benjamin Lee',
+      'Charlotte Smith',
+      'Daniel O’Connor',
+      'Ethan Brown',
+      'Fiona McKenzie',
+      'Grace Liu',
+      'Henry Thompson',
+      'Isla Martin',
+      'Jack Williams',
+      'Kara Phillips',
+      'Liam Jones'
+    ];
+
+    // Populate datalist options
+    const nameOptions = document.getElementById('nameOptions');
+    ALLOWED_NAMES.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      nameOptions.appendChild(opt);
+    });
+
+    // Case-insensitive membership check
+    function isAllowedName(value) {
+      const v = String(value || '').trim().toLowerCase();
+      return ALLOWED_NAMES.some(n => n.toLowerCase() === v);
+    }
+
+    // Live validity message for the name field
+    const nameInput = document.getElementById('name');
+    nameInput.addEventListener('input', () => {
+      if (!nameInput.value) {
+        nameInput.setCustomValidity('Please choose a name from the list.');
+      } else if (!isAllowedName(nameInput.value)) {
+        nameInput.setCustomValidity('That name is not in the list. Please select a suggested name.');
+      } else {
+        nameInput.setCustomValidity('');
+      }
+      // Show the browser’s bubble if invalid after typing
+      if (!nameInput.checkValidity()) {
+        nameInput.reportValidity();
+      }
+    });
+
+    // Form submission
+    document.getElementById('enrollForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const msg = document.getElementById('msg');
+      const nameVal = nameInput.value;
+      const selectedCourses = Array.from(
+        document.querySelectorAll('input[name="courses"]:checked')
+      ).map(cb => cb.value);
+
+      // Validate name strictly against list
+      if (!isAllowedName(nameVal)) {
+        msg.style.display = 'block';
+        msg.style.background = '#fff0f0';
+        msg.style.border = '1px solid #dca7a7';
+        msg.style.color = '#a40000';
+        msg.textContent = 'Please select a valid name from the list.';
+        nameInput.focus();
+        return;
+      }
+
+      // (Optional) require at least one course — uncomment if you want to enforce
+      // if (selectedCourses.length === 0) {
+      //   msg.style.display = 'block';
+      //   msg.style.background = '#fff0f0';
+      //   msg.style.border = '1px solid #dca7a7';
+      //   msg.style.color = '#a40000';
+      //   msg.textContent = 'Please select at least one course.';
+      //   return;
+      // }
+
+      // If everything is fine, show a simple confirmation (or post via fetch)
+      const result = {
+        name: nameVal,
+        courses: selectedCourses
+      };
+
+      msg.style.display = 'block';
+      msg.style.background = '#f0fff4';
+      msg.style.border = '1px solid #9ad1a0';
+      msg.style.color = '#1b6b22';
+      msg.textContent = 'Submitted: ' + JSON.stringify(result);
+
+      // TODO: replace this with a real fetch if you want to send to an endpoint.
+      // fetch('/your-endpoint', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(result) });
+    });
+
+    // Seed initial validity
+    nameInput.dispatchEvent(new Event('input'));
+  </script>
+</body>
+</html>
