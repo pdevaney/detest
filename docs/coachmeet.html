@@ -9,29 +9,22 @@
   <form id="dataForm" style="max-width: 400px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;">
     <h2 style="text-align: center; color: #333;">Coaching Session Request</h2>
 
-    <!-- Hidden field for form_type -->
+    <!-- Hidden field -->
     <input type="hidden" id="form_type" name="form_type" value="1">
 
     <!-- Due date -->
     <label for="due_date" style="display: block; margin-bottom: 8px; font-weight: bold;">
       When would you like to meet with your coach? Please indicate the latest date before which you need to meet.
     </label>
-    <input
-      type="date"
-      id="due_date"
-      name="due_date"
-      required
-      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+    <input type="date" id="due_date" name="due_date" required
+           style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
 
     <!-- Duration -->
     <label for="duration" style="display: block; margin-bottom: 8px; font-weight: bold;">
       How much time would you like to request with your coach?
     </label>
-    <select
-      id="duration"
-      name="duration"
-      required
-      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+    <select id="duration" name="duration" required
+            style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
       <option value="" disabled selected>Please select…</option>
       <option value="15 mins">15 mins</option>
       <option value="30 mins">30 mins</option>
@@ -43,11 +36,8 @@
     <label for="mode" style="display: block; margin-bottom: 8px; font-weight: bold;">
       How would you like to meet?
     </label>
-    <select
-      id="mode"
-      name="mode"
-      required
-      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+    <select id="mode" name="mode" required
+            style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
       <option value="" disabled selected>Please select…</option>
       <option value="Face-to-face">Face-to-face</option>
       <option value="Phone call">Phone call</option>
@@ -58,18 +48,14 @@
     <label for="purpose" style="display: block; margin-bottom: 8px; font-weight: bold;">
       What is the purpose of the meeting?
     </label>
-    <textarea
-      id="purpose"
-      name="purpose"
-      rows="4"
-      placeholder="Explain the reason for your meeting request..."
-      style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+    <textarea id="purpose" name="purpose" rows="4"
+              placeholder="Explain the reason for your meeting request..."
+              style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
 
-    <!-- Submit Button -->
-    <button
-      type="submit"
-      style="width: 100%; padding: 10px; background-color: #007BFF; border: none;
-             border-radius: 4px; color: white; font-size: 16px; cursor: pointer;">
+    <!-- Submit -->
+    <button type="submit"
+            style="width: 100%; padding: 10px; background-color: #007BFF; border: none;
+                   border-radius: 4px; color: white; font-size: 16px; cursor: pointer;">
       Submit
     </button>
   </form>
@@ -95,14 +81,22 @@
     document.getElementById('dataForm').addEventListener('submit', async function (event) {
       event.preventDefault();
 
+      const iframeParams = getQueryParamsFromSelf();
+
       const data = {
-        due_date: document.getElementById('due_date').value,
-        duration: document.getElementById('duration').value,
-        mode: document.getElementById('mode').value,
-        purpose: document.getElementById('purpose').value,
         form_type: document.getElementById('form_type').value,
-        iframe_src: iframeSrc,
-        ...getQueryParamsFromSelf()
+
+        iframe_params: {
+          ...iframeParams,
+          iframe_src: iframeSrc
+        },
+
+        form_details: {
+          due_date: document.getElementById('due_date').value,
+          duration: document.getElementById('duration').value,
+          mode: document.getElementById('mode').value,
+          purpose: document.getElementById('purpose').value
+        }
       };
 
       const headers = {
@@ -117,7 +111,8 @@
         body: data
       };
 
-      document.getElementById('requestOutput').innerText = JSON.stringify(requestInfo, null, 2);
+      document.getElementById('requestOutput').innerText =
+        JSON.stringify(requestInfo, null, 2);
 
       try {
         const response = await fetch(requestInfo.url, {
@@ -146,4 +141,3 @@
 
 </body>
 </html>
-
