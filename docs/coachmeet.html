@@ -3,34 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <title>Submit Coaching Request</title>
+
+  <!-- Inline font import and base styles -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+  </style>
 </head>
-<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 30px;">
+
+<body style="
+  font-family: 'Arimo', Arial, sans-serif;
+  background-color: #f9f9f9;
+  padding: 30px;
+">
 
   <form id="dataForm"
-        style="max-width: 400px; margin: auto; padding: 20px;
-               background: #fff; border: 1px solid #ccc; border-radius: 8px;">
+        style="
+          max-width: 400px;
+          margin: auto;
+          padding: 20px;
+          background: #fff;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          font-family: 'Arimo', Arial, sans-serif;
+        ">
 
-    <h2 style="text-align: center; color: #333;">Coaching Session Request</h2>
+    <h2 style="text-align: center; color: #333; font-family: 'Arimo', Arial, sans-serif;">
+      Coaching Session Request
+    </h2>
 
     <!-- Hidden fields -->
     <input type="hidden" id="form_type" name="form_type" value="1">
     <input type="hidden" id="form_subtype" name="form_subtype" value="1">
 
     <!-- Due date -->
-    <label for="due_date" style="display: block; margin-bottom: 8px; font-weight: bold;">
+    <label for="due_date" style="display:block; margin-bottom:8px; font-weight:bold;">
       When would you like to meet with your coach? Please indicate the latest date before which you need to meet.
     </label>
     <input type="date" id="due_date" name="due_date" required
-           style="width: 100%; padding: 8px; margin-bottom: 15px;
-                  border: 1px solid #ccc; border-radius: 4px;">
+           style="
+             width: 100%;
+             padding: 8px;
+             margin-bottom: 15px;
+             border: 1px solid #ccc;
+             border-radius: 4px;
+             font-family: 'Arimo', Arial, sans-serif;
+           ">
 
     <!-- Duration -->
-    <label for="duration" style="display: block; margin-bottom: 8px; font-weight: bold;">
+    <label for="duration" style="display:block; margin-bottom:8px; font-weight:bold;">
       How much time would you like to request with your coach?
     </label>
     <select id="duration" name="duration" required
-            style="width: 100%; padding: 8px; margin-bottom: 15px;
-                   border: 1px solid #ccc; border-radius: 4px;">
+            style="
+              width: 100%;
+              padding: 8px;
+              margin-bottom: 15px;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+              font-family: 'Arimo', Arial, sans-serif;
+            ">
       <option value="" disabled selected>Please select…</option>
       <option value="15 mins">15 mins</option>
       <option value="30 mins">30 mins</option>
@@ -39,12 +70,18 @@
     </select>
 
     <!-- Mode -->
-    <label for="mode" style="display: block; margin-bottom: 8px; font-weight: bold;">
+    <label for="mode" style="display:block; margin-bottom:8px; font-weight:bold;">
       How would you like to meet?
     </label>
     <select id="mode" name="mode" required
-            style="width: 100%; padding: 8px; margin-bottom: 15px;
-                   border: 1px solid #ccc; border-radius: 4px;">
+            style="
+              width: 100%;
+              padding: 8px;
+              margin-bottom: 15px;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+              font-family: 'Arimo', Arial, sans-serif;
+            ">
       <option value="" disabled selected>Please select…</option>
       <option value="Face-to-face meeting">Face-to-face meeting</option>
       <option value="Phone call">Phone call</option>
@@ -52,28 +89,50 @@
     </select>
 
     <!-- Purpose -->
-    <label for="purpose" style="display: block; margin-bottom: 8px; font-weight: bold;">
+    <label for="purpose" style="display:block; margin-bottom:8px; font-weight:bold;">
       What is the purpose of the meeting?
     </label>
     <textarea id="purpose" name="purpose" rows="4"
               placeholder="Explain the reason for your meeting request..."
-              style="width: 100%; padding: 8px; margin-bottom: 15px;
-                     border: 1px solid #ccc; border-radius: 4px;"></textarea>
+              style="
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-family: 'Arimo', Arial, sans-serif;
+              "></textarea>
 
     <!-- Submit -->
     <button type="submit"
-            style="width: 100%; padding: 10px; background-color: #007BFF;
-                   border: none; border-radius: 4px; color: white;
-                   font-size: 16px; cursor: pointer;">
+            style="
+              width: 100%;
+              padding: 10px;
+              background-color: #007BFF;
+              border: none;
+              border-radius: 4px;
+              color: white;
+              font-size: 16px;
+              cursor: pointer;
+              font-family: 'Arimo', Arial, sans-serif;
+            ">
       Submit
     </button>
   </form>
 
   <!-- Confirmation message -->
   <div id="response"
-       style="max-width: 400px; margin: 20px auto; text-align: center;
-              color: #1b6b22; background-color: #f0fff4;
-              padding: 12px; border-radius: 6px; display: none;">
+       style="
+         max-width: 400px;
+         margin: 20px auto;
+         text-align: center;
+         color: #1b6b22;
+         background-color: #f0fff4;
+         padding: 12px;
+         border-radius: 6px;
+         font-family: 'Arimo', Arial, sans-serif;
+         display: none;
+       ">
     Thank you for your submission. Your coach has been notified of your request.
   </div>
 
@@ -122,12 +181,10 @@
           }
         );
 
-        // Hide form and show confirmation
         document.getElementById('dataForm').style.display = 'none';
         document.getElementById('response').style.display = 'block';
 
       } catch (error) {
-        // Even on error, keep user-facing message calm and consistent
         document.getElementById('dataForm').style.display = 'none';
         document.getElementById('response').style.display = 'block';
       }
