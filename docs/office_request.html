@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Submit Availability</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+  </style>
+</head>
+
+<body style="font-family: 'Arimo', Arial, sans-serif; background-color: #f9f9f9; padding: 30px;">
+
+  <form id="dataForm"
+        style="max-width: 520px; margin: auto; padding: 20px; background: #fff; border: 1px solid #ccc; border-radius: 8px;">
+
+    <h2 style="text-align: center; color: #333; margin-top: 0;">Availability Request</h2>
+    <p style="color:#555; font-size: 14px; line-height: 1.4; margin-top: 0;">
+      Please provide up to five date/time options that work for you.
+    </p>
+
+    <!-- Hidden fields -->
+    <input type="hidden" id="form_type" name="form_type" value="2">
+    <input type="hidden" id="form_subtype" name="form_subtype" value="1">
+
+    <!-- Availability rows -->
+    <div style="margin-top: 10px;">
+      <div style="font-weight:bold; margin-bottom: 8px; color:#333;">Your available times (up to 5)</div>
+
+      <!-- Row template repeated 5x -->
+      <div style="padding: 12px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 10px; background:#fafafa;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Option 1</div>
+        <label style="display:block; font-weight:bold; margin-bottom:6px;">Date</label>
+        <input type="date" id="date_1" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">From</label>
+            <input type="time" id="from_1" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">To</label>
+            <input type="time" id="to_1" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 12px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 10px; background:#fafafa;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Option 2</div>
+        <label style="display:block; font-weight:bold; margin-bottom:6px;">Date</label>
+        <input type="date" id="date_2" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">From</label>
+            <input type="time" id="from_2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">To</label>
+            <input type="time" id="to_2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 12px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 10px; background:#fafafa;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Option 3</div>
+        <label style="display:block; font-weight:bold; margin-bottom:6px;">Date</label>
+        <input type="date" id="date_3" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">From</label>
+            <input type="time" id="from_3" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">To</label>
+            <input type="time" id="to_3" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 12px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 10px; background:#fafafa;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Option 4</div>
+        <label style="display:block; font-weight:bold; margin-bottom:6px;">Date</label>
+        <input type="date" id="date_4" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">From</label>
+            <input type="time" id="from_4" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">To</label>
+            <input type="time" id="to_4" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 12px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 10px; background:#fafafa;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Option 5</div>
+        <label style="display:block; font-weight:bold; margin-bottom:6px;">Date</label>
+        <input type="date" id="date_5" style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">From</label>
+            <input type="time" id="from_5" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+          <div style="flex:1;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">To</label>
+            <input type="time" id="to_5" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-family:'Arimo', Arial, sans-serif;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit"
+            style="width: 100%; padding: 10px; background-color: #007BFF; border: none;
+                   border-radius: 4px; color: white; font-size: 16px; cursor: pointer; font-family:'Arimo', Arial, sans-serif;">
+      Submit
+    </button>
+  </form>
+
+  <!-- Request Preview -->
+  <div id="requestPreview" style="max-width: 680px; margin: 20px auto; padding: 15px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px;">
+    <h3 style="margin-top: 0; text-align:center;">Request Preview</h3>
+    <pre id="requestOutput" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+  </div>
+
+  <!-- Simple user message (no diagnostics) -->
+  <div id="response"
+       style="max-width: 520px; margin: 20px auto; text-align: center;
+              color: #1b6b22; background-color: #f0fff4;
+              padding: 12px; border-radius: 6px; display: none;">
+    Thank you for your submission. Your coach has been notified of your request.
+  </div>
+
+  <script>
+    const iframeSrc = window.location.href;
+
+    function getQueryParamsFromSelf() {
+      const params = {};
+      const usp = new URLSearchParams(window.location.search);
+      for (const [key, value] of usp.entries()) { params[key] = value; }
+      return params;
+    }
+
+    function parseTimeToMinutes(t) {
+      // "HH:MM" -> minutes since midnight
+      if (!t || !/^\d{2}:\d{2}$/.test(t)) return null;
+      const [hh, mm] = t.split(':').map(Number);
+      if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+      return hh * 60 + mm;
+    }
+
+    document.getElementById('dataForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      // Build availabilities array: include only complete rows (date + from + to)
+      const availabilities = [];
+      for (let i = 1; i <= 5; i++) {
+        const date = document.getElementById(`date_${i}`).value;
+        const from = document.getElementById(`from_${i}`).value;
+        const to   = document.getElementById(`to_${i}`).value;
+
+        // ignore totally empty rows
+        if (!date && !from && !to) continue;
+
+        // if partially filled, treat as validation error
+        if (!date || !from || !to) {
+          alert(`Please complete Date, From, and To for Option ${i}, or leave it blank.`);
+          return;
+        }
+
+        const fromMin = parseTimeToMinutes(from);
+        const toMin   = parseTimeToMinutes(to);
+        if (fromMin == null || toMin == null) {
+          alert(`Invalid time format in Option ${i}.`);
+          return;
+        }
+        if (toMin <= fromMin) {
+          alert(`For Option ${i}, the "To" time must be after the "From" time.`);
+          return;
+        }
+
+        availabilities.push({
+          date: date,
+          from_time: from,
+          to_time: to
+        });
+      }
+
+      if (availabilities.length === 0) {
+        alert('Please provide at least one availability option.');
+        return;
+      }
+
+      const data = {
+        form_type: document.getElementById('form_type').value,        // "2"
+        form_subtype: document.getElementById('form_subtype').value,  // "1"
+
+        iframe_params: {
+          ...getQueryParamsFromSelf(),
+          iframe_src: iframeSrc
+        },
+
+        form_details: {
+          availabilities: availabilities
+        }
+      };
+
+      const requestInfo = {
+        method: 'POST',
+        url: 'https://apim.eu.workato.com/211811_directioneering/form_submission-v1/form_submit',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-token': '7283fa530d66f0b81b48eb9a4ce5b56176d7e6388154ca2a273280db379d8775'
+        },
+        body: data
+      };
+
+      // Request preview (shows the new array structure)
+      document.getElementById('requestOutput').innerText =
+        JSON.stringify(requestInfo, null, 2);
+
+      try {
+        await fetch(requestInfo.url, {
+          method: requestInfo.method,
+          headers: requestInfo.headers,
+          body: JSON.stringify(requestInfo.body)
+        });
+
+        // Show simple thank-you
+        document.getElementById('dataForm').style.display = 'none';
+        document.getElementById('response').style.display = 'block';
+
+      } catch (error) {
+        // Still show the same calm user message
+        document.getElementById('dataForm').style.display = 'none';
+        document.getElementById('response').style.display = 'block';
+      }
+    });
+  </script>
+
+</body>
+</html>
