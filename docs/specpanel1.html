@@ -68,8 +68,7 @@
 <body>
 
   <form id="dataForm">
-    <!-- Hidden fields -->
-    <input type="hidden" id="form_type" value="2">
+    <input type="hidden" id="form_type" value="1">
     <input type="hidden" id="form_subtype" value="1">
 
     <button type="submit" id="submitBtn">
@@ -77,12 +76,10 @@
     </button>
   </form>
 
-  <!-- Sending message -->
   <div id="sending" class="message">
     Sending request…
   </div>
 
-  <!-- Success message -->
   <div id="response" class="message">
     Thank you for your submission. Your request has been sent.
   </div>
@@ -106,7 +103,6 @@
       const sendingMsg = document.getElementById('sending');
       const responseMsg = document.getElementById('response');
 
-      // Disable button and show "sending"
       submitBtn.disabled = true;
       sendingMsg.style.display = 'block';
 
@@ -133,15 +129,11 @@
           }
         );
 
-        // Hide form and sending message
         document.getElementById('dataForm').style.display = 'none';
         sendingMsg.style.display = 'none';
-
-        // Show success
         responseMsg.style.display = 'block';
 
       } catch (error) {
-        // If something goes wrong, re-enable button and hide sending
         sendingMsg.style.display = 'none';
         submitBtn.disabled = false;
         alert('There was a problem sending your request. Please try again.');
