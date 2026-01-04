@@ -39,15 +39,28 @@
       background-color: #0069d9;
     }
 
-    #response {
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .message {
       max-width: 400px;
       margin: 20px auto;
       text-align: center;
-      color: #1b6b22;
-      background-color: #f0fff4;
       padding: 12px;
       border-radius: 6px;
       display: none;
+    }
+
+    #sending {
+      background-color: #fff8e1;
+      color: #8a6d3b;
+    }
+
+    #response {
+      background-color: #f0fff4;
+      color: #1b6b22;
     }
   </style>
 </head>
@@ -56,13 +69,21 @@
 
   <form id="dataForm">
     <!-- Hidden fields -->
-    <input type="hidden" id="form_type" value="2">
+    <input type="hidden" id="form_type" value="1">
     <input type="hidden" id="form_subtype" value="1">
 
-    <button type="submit">Request this service</button>
+    <button type="submit" id="submitBtn">
+      Request this service
+    </button>
   </form>
 
-  <div id="response">
+  <!-- Sending message -->
+  <div id="sending" class="message">
+    Sending request…
+  </div>
+
+  <!-- Success message -->
+  <div id="response" class="message">
     Thank you for your submission. Your request has been sent.
   </div>
 
@@ -81,6 +102,14 @@
     document.getElementById('dataForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
+      const submitBtn = document.getElementById('submitBtn');
+      const sendingMsg = document.getElementById('sending');
+      const responseMsg = document.getElementById('response');
+
+      // Disable button and show "sending"
+      submitBtn.disabled = true;
+      sendingMsg.style.display = 'block';
+
       const payload = {
         form_type: document.getElementById('form_type').value,
         form_subtype: document.getElementById('form_subtype').value,
@@ -91,20 +120,32 @@
         form_details: {}
       };
 
-      await fetch(
-        'https://apim.eu.workato.com/211811_directioneering/form_submission-v1/form_submit',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'api-token': '7283fa530d66f0b81b48eb9a4ce5b56176d7e6388154ca2a273280db379d8775'
-          },
-          body: JSON.stringify(payload)
-        }
-      );
+      try {
+        await fetch(
+          'https://apim.eu.workato.com/211811_directioneering/form_submission-v1/form_submit',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'api-token': '7283fa530d66f0b81b48eb9a4ce5b56176d7e6388154ca2a273280db379d8775'
+            },
+            body: JSON.stringify(payload)
+          }
+        );
 
-      document.getElementById('dataForm').style.display = 'none';
-      document.getElementById('response').style.display = 'block';
+        // Hide form and sending message
+        document.getElementById('dataForm').style.display = 'none';
+        sendingMsg.style.display = 'none';
+
+        // Show success
+        responseMsg.style.display = 'block';
+
+      } catch (error) {
+        // If something goes wrong, re-enable button and hide sending
+        sendingMsg.style.display = 'none';
+        submitBtn.disabled = false;
+        alert('There was a problem sending your request. Please try again.');
+      }
     });
   </script>
 
