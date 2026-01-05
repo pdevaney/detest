@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Carparking Request</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+
+    body {
+      font-family: 'Arimo', Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 30px;
+    }
+
+    form {
+      max-width: 420px;
+      margin: auto;
+      padding: 24px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    h2 {
+      margin: 0 0 14px 0;
+      text-align: center;
+      color: #333;
+      font-size: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 12px 0 6px 0;
+      color: #333;
+      line-height: 1.3;
+    }
+
+    input[type="date"],
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: 'Arimo', Arial, sans-serif;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    input[type="date"] {
+      height: 40px;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'Arimo', Arial, sans-serif;
+    }
+
+    button:hover {
+      background-color: #0069d9;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .message {
+      max-width: 420px;
+      margin: 8px auto;
+      text-align: center;
+      padding: 8px 10px;
+      border-radius: 6px;
+      display: none;
+      font-size: 14px;
+      font-family: 'Arimo', Arial, sans-serif;
+      box-sizing: border-box;
+    }
+
+    #sending {
+      background-color: #fff8e1;
+      color: #8a6d3b;
+    }
+
+    #response {
+      background-color: #f0fff4;
+      color: #1b6b22;
+    }
+
+    #error {
+      background-color: #fff0f0;
+      color: #8b0000;
+    }
+  </style>
+</head>
+
+<body>
+
+  <form id="dataForm">
+    <h2>Carparking Request</h2>
+
+    <input type="hidden" id="form_type" value="3">
+    <input type="hidden" id="form_subtype" value="1">
+
+    <label for="parking_date">
+      What date are you interested in parking at Directioneering?
+    </label>
+    <input type="date" id="parking_date" required>
+
+    <label for="reception_questions">
+      Do you have any questions for our reception?
+    </label>
+    <textarea
+      id="reception_questions"
+      placeholder="Optional"></textarea>
+
+    <button type="submit" id="submitBtn">Submit request</button>
+  </form>
+
+  <div id="sending" class="message">Sending request…</div>
+  <div id="response" class="message">Thank you for your submission. Your request has been sent.</div>
+  <div id="error" class="message">There was a problem sending your request. Please try again.</div>
+
+  <script>
+    const iframeSrc = window.location.href;
+
+    function getQueryParamsFromSelf() {
+      const params = {};
+      const usp = new URLSearchParams(window.location.search);
+      for (const [key, value] of usp.entries()) {
+        params[key] = value;
+      }
+      return params;
+    }
+
+    document.getElementById('dataForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      const sendingMsg = document.getElementById('sending');
+      const responseMsg = document.getElementById('response');
+      const errorMsg = document.getElementById('error');
+
+      errorMsg.style.display = 'none';
+      responseMsg.style.display = 'none';
+
+      submitBtn.disabled = true;
+      sendingMsg.style.display = 'block';
+
+      const payload = {
+        form_type: document.getElementById('form_type').value,
+        form_subtype: document.getElementById('form_subtype').value,
+        iframe_params: {
+          ...getQueryParamsFromSelf(),
+          iframe_src: iframeSrc
+        },
+        form_details: {
+          parking_date: document.getElementById('parking_date').value,
+          reception_questions: document.getElementById('reception_questions').value || ""
+        }
+      };
+
+      try {
+        const res = await fetch(
+          'https://apim.eu.workato.com/211811_directioneering/form_submission-v1/form_submit',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'api-token': '7283fa530d66f0b81b48eb9a4ce5b56176d7e6388154ca2a273280db379d8775'
+            },
+            body: JSON.stringify(payload)
+          }
+        );
+
+        sendingMsg.style.display = 'none';
+
+        if (!res.ok) {
+          submitBtn.disabled = false;
+          errorMsg.style.display = 'block';
+          return;
+        }
+
+        document.getElementById('dataForm').style.display = 'none';
+        responseMsg.style.display = 'block';
+
+      } catch (err) {
+        sendingMsg.style.display = 'none';
+        submitBtn.disabled = false;
+        errorMsg.style.display = 'block';
+      }
+    });
+  </script>
+
+</body>
+</html>
