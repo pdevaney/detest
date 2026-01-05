@@ -106,6 +106,11 @@
     .btn-primary { background-color: #007BFF; }
     .btn-secondary { background-color: #6c757d; }
 
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .message {
       max-width: 420px;
       margin: 8px auto;
@@ -143,7 +148,7 @@
 <body>
 
 <form id="dataForm">
-  <input type="hidden" id="form_type" value="4">
+  <input type="hidden" id="form_type" value="2">
   <input type="hidden" id="form_subtype" value="1">
 
   <div class="options-title">
@@ -160,21 +165,15 @@
     Please let our reception staff know if you have any specific requirements for your booking request.
   </div>
 
-  <textarea
-    id="additional_requirements"
-    placeholder="Optional"></textarea>
+  <textarea id="additional_requirements" placeholder="Optional"></textarea>
 
   <button type="submit" id="submitBtn" class="btn btn-primary">
     Submit
   </button>
 </form>
 
-<div id="sendingMessage" class="message sending">
-  Sending request…
-</div>
-
+<div id="sendingMessage" class="message sending">Sending request…</div>
 <div id="errorMessage" class="message error"></div>
-
 <div id="successMessage" class="message success">
   Thank you for your submission. Your request has been sent.
 </div>
@@ -183,6 +182,15 @@
   const iframeSrc = window.location.href;
   const maxOptions = 5;
   const optionsContainer = document.getElementById("optionsContainer");
+
+  function getQueryParamsFromSelf() {
+    const params = {};
+    const usp = new URLSearchParams(window.location.search);
+    for (const [k, v] of usp.entries()) {
+      params[k] = v;
+    }
+    return params;
+  }
 
   const timeOptions = [
     "08:30","09:00","09:30","10:00","10:30","11:00","11:30",
@@ -260,7 +268,6 @@
   }
 
   document.getElementById("addOptionBtn").onclick = renderOption;
-
   renderOption();
 
   document.getElementById("dataForm").addEventListener("submit", async e => {
@@ -288,9 +295,12 @@
     }
 
     const payload = {
-      form_type: 2,
-      form_subtype: 1,
-      iframe_params: { iframe_src: iframeSrc },
+      form_type: document.getElementById("form_type").value,
+      form_subtype: document.getElementById("form_subtype").value,
+      iframe_params: {
+        ...getQueryParamsFromSelf(),
+        iframe_src: iframeSrc
+      },
       form_details: {
         availabilities,
         additional_requirements: document.getElementById("additional_requirements").value || ""
@@ -302,12 +312,12 @@
 
     try {
       await fetch(
-        'https://apim.eu.workato.com/211811_directioneering/form_submission-v1/form_submit',
+        "https://apim.eu.workato.com/211811_directioneering/form_submission-v1/form_submit",
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'api-token': '7283fa530d66f0b81b48eb9a4ce5b56176d7e6388154ca2a273280db379d8775'
+            "Content-Type": "application/json",
+            "api-token": "7283fa530d66f0b81b48eb9a4ce5b56176d7e6388154ca2a273280db379d8775"
           },
           body: JSON.stringify(payload)
         }
@@ -316,7 +326,6 @@
       document.getElementById("dataForm").style.display = "none";
       document.getElementById("sendingMessage").style.display = "none";
       document.getElementById("successMessage").style.display = "block";
-
     } catch {
       document.getElementById("submitBtn").disabled = false;
       document.getElementById("sendingMessage").style.display = "none";
