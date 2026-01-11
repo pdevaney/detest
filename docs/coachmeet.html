@@ -4,64 +4,120 @@
   <meta charset="UTF-8">
   <title>Submit Coaching Request</title>
 
-  <!-- Inline font import and base styles -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+
+    body {
+      font-family: 'Arimo', Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 30px;
+      margin: 0;
+    }
+
+    form {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+      margin: 0 0 16px 0;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #333;
+      line-height: 1.35;
+    }
+
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: 'Arimo', Arial, sans-serif;
+      font-size: 14px;
+      margin-bottom: 15px;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'Arimo', Arial, sans-serif;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      max-width: 400px;
+      margin: 10px auto 0 auto;
+      text-align: center;
+      border-radius: 6px;
+      font-family: 'Arimo', Arial, sans-serif;
+      box-sizing: border-box;
+    }
+
+    #sending {
+      color: #8a6d3b;
+      background-color: #fff8e1;
+      padding: 6px 10px;
+      font-size: 14px;
+      display: none;
+    }
+
+    #response {
+      color: #1b6b22;
+      background-color: #f0fff4;
+      padding: 12px;
+      display: none;
+    }
   </style>
 </head>
 
-<body style="
-  font-family: 'Arimo', Arial, sans-serif;
-  background-color: #f9f9f9;
-  padding: 30px;
-">
+<body>
 
-  <form id="dataForm"
-        style="
-          max-width: 400px;
-          margin: auto;
-          padding: 20px;
-          background: #fff;
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          font-family: 'Arimo', Arial, sans-serif;
-        ">
+  <form id="dataForm">
+    <h2>Coaching Session Request</h2>
 
-    <h2 style="text-align: center; color: #333; font-family: 'Arimo', Arial, sans-serif;">
-      Coaching Session Request
-    </h2>
+    <input type="hidden" id="form_type" value="1">
+    <input type="hidden" id="form_subtype" value="1">
 
-    <!-- Hidden fields -->
-    <input type="hidden" id="form_type" name="form_type" value="1">
-    <input type="hidden" id="form_subtype" name="form_subtype" value="1">
-
-    <!-- Due date -->
-    <label for="due_date" style="display:block; margin-bottom:8px; font-weight:bold;">
+    <label for="due_date">
       When would you like to meet with your coach? Please indicate the latest date before which you need to meet.
     </label>
-    <input type="date" id="due_date" name="due_date" required
-           style="
-             width: 100%;
-             padding: 8px;
-             margin-bottom: 15px;
-             border: 1px solid #ccc;
-             border-radius: 4px;
-             font-family: 'Arimo', Arial, sans-serif;
-           ">
+    <input type="date" id="due_date" required>
 
-    <!-- Duration -->
-    <label for="duration" style="display:block; margin-bottom:8px; font-weight:bold;">
+    <label for="duration">
       How much time would you like to request with your coach?
     </label>
-    <select id="duration" name="duration" required
-            style="
-              width: 100%;
-              padding: 8px;
-              margin-bottom: 15px;
-              border: 1px solid #ccc;
-              border-radius: 4px;
-              font-family: 'Arimo', Arial, sans-serif;
-            ">
+    <select id="duration" required>
       <option value="" disabled selected>Please select…</option>
       <option value="15 mins">15 mins</option>
       <option value="30 mins">30 mins</option>
@@ -69,70 +125,27 @@
       <option value="1 hour">1 hour</option>
     </select>
 
-    <!-- Mode -->
-    <label for="mode" style="display:block; margin-bottom:8px; font-weight:bold;">
+    <label for="mode">
       How would you like to meet?
     </label>
-    <select id="mode" name="mode" required
-            style="
-              width: 100%;
-              padding: 8px;
-              margin-bottom: 15px;
-              border: 1px solid #ccc;
-              border-radius: 4px;
-              font-family: 'Arimo', Arial, sans-serif;
-            ">
+    <select id="mode" required>
       <option value="" disabled selected>Please select…</option>
       <option value="Face-to-face meeting">Face-to-face meeting</option>
       <option value="Phone call">Phone call</option>
       <option value="Video call">Video call</option>
     </select>
 
-    <!-- Purpose -->
-    <label for="purpose" style="display:block; margin-bottom:8px; font-weight:bold;">
+    <label for="purpose">
       Please let your coach know the purpose of the meeting.
     </label>
-    <textarea id="purpose" name="purpose" rows="4"
-              placeholder="Explain the reason for your meeting request..."
-              style="
-                width: 100%;
-                padding: 8px;
-                margin-bottom: 15px;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                font-family: 'Arimo', Arial, sans-serif;
-              "></textarea>
+    <textarea id="purpose" placeholder="Explain the reason for your meeting request..."></textarea>
 
-    <!-- Submit -->
-    <button type="submit"
-            style="
-              width: 100%;
-              padding: 10px;
-              background-color: #007BFF;
-              border: none;
-              border-radius: 4px;
-              color: white;
-              font-size: 16px;
-              cursor: pointer;
-              font-family: 'Arimo', Arial, sans-serif;
-            ">
-      Submit
-    </button>
+    <button type="submit" id="submitBtn">Submit</button>
   </form>
 
-  <!-- Confirmation message -->
-  <div id="response"
-       style="
-         max-width: 400px;
-         margin: 20px auto;
-         text-align: center;
-         color: #1b6b22;
-         background-color: #f0fff4;
-         padding: 12px;
-         border-radius: 6px;
-         font-family: 'Arimo', Arial, sans-serif;
-         display: none;
-       ">
+  <div id="sending" class="message">Sending request…</div>
+
+  <div id="response" class="message">
     Thank you for your submission. Your coach has been notified of your request.
   </div>
 
@@ -151,15 +164,16 @@
     document.getElementById('dataForm').addEventListener('submit', async function (event) {
       event.preventDefault();
 
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('sending').style.display = 'block';
+
       const data = {
         form_type: document.getElementById('form_type').value,
         form_subtype: document.getElementById('form_subtype').value,
-
         iframe_params: {
           ...getQueryParamsFromSelf(),
           iframe_src: iframeSrc
         },
-
         form_details: {
           due_date: document.getElementById('due_date').value,
           duration: document.getElementById('duration').value,
@@ -180,12 +194,9 @@
             body: JSON.stringify(data)
           }
         );
-
+      } finally {
         document.getElementById('dataForm').style.display = 'none';
-        document.getElementById('response').style.display = 'block';
-
-      } catch (error) {
-        document.getElementById('dataForm').style.display = 'none';
+        document.getElementById('sending').style.display = 'none';
         document.getElementById('response').style.display = 'block';
       }
     });
