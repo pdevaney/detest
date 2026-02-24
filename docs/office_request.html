@@ -5,12 +5,11 @@
   <title>Submit Availability</title>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
-
     body {
-      font-family: 'Arimo', Arial, sans-serif;
+      font-family: Arial, sans-serif;
       background-color: #f9f9f9;
       padding: 30px;
+      margin: 0;
     }
 
     form {
@@ -20,6 +19,7 @@
       background: #fff;
       border: 1px solid #ccc;
       border-radius: 8px;
+      box-sizing: border-box;
     }
 
     .options-title {
@@ -41,6 +41,7 @@
     .option-title {
       font-weight: bold;
       margin-bottom: 10px;
+      color: #333;
     }
 
     .remove-option {
@@ -68,6 +69,7 @@
       display: block;
       font-weight: bold;
       margin-bottom: 6px;
+      color: #333;
     }
 
     input[type="date"],
@@ -77,9 +79,10 @@
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      font-family: 'Arimo', Arial, sans-serif;
+      font-family: Arial, sans-serif;
       box-sizing: border-box;
       font-size: 14px;
+      background: #fff;
     }
 
     input[type="date"],
@@ -101,14 +104,19 @@
       font-size: 16px;
       cursor: pointer;
       margin-bottom: 10px;
+      font-family: Arial, sans-serif;
     }
 
-    .btn-primary { background-color: #007BFF; }
+    .btn-primary { background-color: #CB370F; } /* vermilion */
+    .btn-primary:hover:enabled { background-color: #A92E0C; }
+
     .btn-secondary { background-color: #6c757d; }
 
+    /* Make disabled buttons clearly inactive */
     .btn:disabled {
-      opacity: 0.6;
+      opacity: 1;
       cursor: not-allowed;
+      background-color: #b5b5b5 !important;
     }
 
     .message {
@@ -119,6 +127,8 @@
       font-size: 14px;
       display: none;
       text-align: center;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
     }
 
     .message.error {
@@ -186,9 +196,7 @@
   function getQueryParamsFromSelf() {
     const params = {};
     const usp = new URLSearchParams(window.location.search);
-    for (const [k, v] of usp.entries()) {
-      params[k] = v;
-    }
+    for (const [k, v] of usp.entries()) params[k] = v;
     return params;
   }
 
@@ -206,6 +214,72 @@
       </select>`;
   }
 
+  function toISODate(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function isWeekend(isoDateStr) {
+    const [y, m, d] = isoDateStr.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    const day = dt.getDay(); // 0=Sun, 6=Sat
+    return day === 0 || day === 6;
+  }
+
+  function isTodayOrPast(isoDateStr) {
+    const [y, m, d] = isoDateStr.split("-").map(Number);
+    const picked = new Date(y, m - 1, d);
+    picked.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return picked <= today; // blocks today and past
+  }
+
+  function showError(msg) {
+    const el = document.getElementById("errorMessage");
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  function clearMessages() {
+    document.getElementById("errorMessage").style.display = "none";
+    document.getElementById("successMessage").style.display = "none";
+    document.getElementById("sendingMessage").style.display = "none";
+  }
+
+  function updateAddButtonState() {
+    const addBtn = document.getElementById("addOptionBtn");
+    const count = optionsContainer.children.length;
+
+    if (count >= maxOptions) {
+      addBtn.disabled = true;
+      addBtn.textContent = "Maximum 5 options reached";
+    } else {
+      addBtn.disabled = false;
+      addBtn.textContent = "Add Option";
+    }
+  }
+
+  function setDateRules(dateInput) {
+    // future-only: set min to tomorrow (not today)
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    dateInput.min = toISODate(tomorrow);
+
+    dateInput.addEventListener("change", () => {
+      if (!dateInput.value) return;
+
+      if (isTodayOrPast(dateInput.value) || isWeekend(dateInput.value)) {
+        dateInput.value = "";
+        showError("Please choose a weekday in the future (Monday to Friday, not today).");
+      }
+    });
+  }
+
   function renderOption() {
     if (optionsContainer.children.length >= maxOptions) return;
 
@@ -214,12 +288,12 @@
     box.className = "option-box";
 
     box.innerHTML = `
-      ${index > 1 ? `<button class="remove-option" title="Remove option">×</button>` : ""}
+      ${index > 1 ? `<button class="remove-option" title="Remove option" type="button">×</button>` : ""}
       <div class="option-title">Option ${index}</div>
       <div class="row">
         <div class="col-date">
           <label>Date</label>
-          <input type="date">
+          <input type="date" required>
         </div>
         <div class="col-time">
           <label>From</label>
@@ -236,10 +310,16 @@
       box.querySelector(".remove-option").onclick = () => {
         box.remove();
         renumberOptions();
+        updateAddButtonState();
       };
     }
 
+    const dateInput = box.querySelector('input[type="date"]');
+    setDateRules(dateInput);
+
     optionsContainer.appendChild(box);
+
+    updateAddButtonState();
   }
 
   function renumberOptions() {
@@ -255,19 +335,12 @@
     return h * 60 + m;
   }
 
-  function showError(msg) {
-    const el = document.getElementById("errorMessage");
-    el.textContent = msg;
-    el.style.display = "block";
-  }
+  document.getElementById("addOptionBtn").onclick = () => {
+    clearMessages();
+    renderOption();
+  };
 
-  function clearMessages() {
-    document.getElementById("errorMessage").style.display = "none";
-    document.getElementById("successMessage").style.display = "none";
-    document.getElementById("sendingMessage").style.display = "none";
-  }
-
-  document.getElementById("addOptionBtn").onclick = renderOption;
+  // Start with one option
   renderOption();
 
   document.getElementById("dataForm").addEventListener("submit", async e => {
@@ -283,6 +356,11 @@
 
       if (!date || !from || !to) {
         showError("Please complete Date, From, and To for all options.");
+        return;
+      }
+
+      if (isTodayOrPast(date) || isWeekend(date)) {
+        showError("Please choose only weekdays in the future (Monday to Friday, not today).");
         return;
       }
 
