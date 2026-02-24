@@ -5,10 +5,8 @@
   <title>Submit Coaching Request</title>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
-
     body {
-      font-family: 'Arimo', Arial, sans-serif;
+      font-family: Arial, sans-serif;
       background-color: #f9f9f9;
       padding: 30px;
       margin: 0;
@@ -47,7 +45,7 @@
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      font-family: 'Arimo', Arial, sans-serif;
+      font-family: Arial, sans-serif;
       font-size: 14px;
       margin-bottom: 15px;
       background: #fff;
@@ -61,13 +59,17 @@
     button {
       width: 100%;
       padding: 10px;
-      background-color: #007BFF;
+      background-color: #CB370F; /* vermilion */
       border: none;
       border-radius: 4px;
       color: white;
       font-size: 16px;
       cursor: pointer;
-      font-family: 'Arimo', Arial, sans-serif;
+      font-family: Arial, sans-serif;
+    }
+
+    button:hover:enabled {
+      background-color: #A92E0C; /* slightly darker on hover */
     }
 
     button:disabled {
@@ -80,7 +82,7 @@
       margin: 10px auto 0 auto;
       text-align: center;
       border-radius: 6px;
-      font-family: 'Arimo', Arial, sans-serif;
+      font-family: Arial, sans-serif;
       box-sizing: border-box;
     }
 
@@ -98,6 +100,16 @@
       padding: 12px;
       display: none;
     }
+
+    #dateWarning {
+      color: #7a1b1b;
+      background-color: #fff0f0;
+      padding: 8px 10px;
+      font-size: 13px;
+      margin: -6px 0 15px 0;
+      border-radius: 4px;
+      display: none;
+    }
   </style>
 </head>
 
@@ -113,6 +125,7 @@
       When would you like to meet with your coach? Please indicate the latest date before which you need to meet.
     </label>
     <input type="date" id="due_date" required>
+    <div id="dateWarning">Please choose a weekday in the future (not today), Monday to Friday.</div>
 
     <label for="duration">
       How much time would you like to request with your coach?
@@ -161,8 +174,71 @@
       return params;
     }
 
+    function toISODate(d) {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function isWeekend(isoDateStr) {
+      // isoDateStr is "YYYY-MM-DD"
+      const [y, m, d] = isoDateStr.split("-").map(Number);
+      const dt = new Date(y, m - 1, d);
+      const day = dt.getDay(); // 0=Sun, 6=Sat
+      return day === 0 || day === 6;
+    }
+
+    function isTodayOrPast(isoDateStr) {
+      const [y, m, d] = isoDateStr.split("-").map(Number);
+      const picked = new Date(y, m - 1, d);
+      picked.setHours(0,0,0,0);
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      return picked <= today; // blocks today and past
+    }
+
+    function validateDateField() {
+      const due = document.getElementById("due_date").value;
+      const warning = document.getElementById("dateWarning");
+
+      if (!due) {
+        warning.style.display = "none";
+        return true;
+      }
+
+      const invalid = isTodayOrPast(due) || isWeekend(due);
+      warning.style.display = invalid ? "block" : "none";
+      return !invalid;
+    }
+
+    // Set min date to tomorrow (future only, not today)
+    (function initDateRules() {
+      const dueDate = document.getElementById("due_date");
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+      dueDate.min = toISODate(tomorrow);
+
+      // Validate when user changes the date
+      dueDate.addEventListener("change", () => {
+        // If weekend selected, clear it so the user has to pick again
+        const ok = validateDateField();
+        if (!ok) dueDate.value = "";
+      });
+    })();
+
     document.getElementById('dataForm').addEventListener('submit', async function (event) {
       event.preventDefault();
+
+      // Final validation guard
+      if (!validateDateField()) {
+        document.getElementById("due_date").focus();
+        return;
+      }
 
       document.getElementById('submitBtn').disabled = true;
       document.getElementById('sending').style.display = 'block';
