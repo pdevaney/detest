@@ -120,9 +120,9 @@
     }
 
     .message {
-      max-width: 420px;
-      margin: 8px auto;
-      padding: 8px 10px;
+      /* CHANGED: now designed to live inside the form */
+      margin: 10px 0 14px 0;
+      padding: 10px 12px;
       border-radius: 6px;
       font-size: 14px;
       display: none;
@@ -165,6 +165,13 @@
     Pick up to 5 dates and times on which you would like to use our office facilities
   </div>
 
+  <!-- MOVED UP: message area now appears near the top of the form -->
+  <div id="sendingMessage" class="message sending">Sending request…</div>
+  <div id="errorMessage" class="message error"></div>
+  <div id="successMessage" class="message success">
+    Thank you for your submission. Your request has been sent.
+  </div>
+
   <div id="optionsContainer"></div>
 
   <button type="button" id="addOptionBtn" class="btn btn-secondary">
@@ -181,12 +188,6 @@
     Submit
   </button>
 </form>
-
-<div id="sendingMessage" class="message sending">Sending request…</div>
-<div id="errorMessage" class="message error"></div>
-<div id="successMessage" class="message success">
-  Thank you for your submission. Your request has been sent.
-</div>
 
 <script>
   const iframeSrc = window.location.href;
@@ -241,6 +242,9 @@
     const el = document.getElementById("errorMessage");
     el.textContent = msg;
     el.style.display = "block";
+
+    // NEW: bring it into view so it's never "off screen"
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function clearMessages() {
