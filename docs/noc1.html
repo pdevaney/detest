@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Manager Staff Job Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f6f6f6;
+      --card:#fff;
+      --border:#dcdcdc;
+      --text:#222;
+      --muted:#666;
+      --primary:#005eb8;
+      --primary-hover:#004a92;
+      --header:#f3f5f7;
+      --rowEven:#fcfcfc;
+      --shadow:0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      padding:32px 16px;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      box-shadow:var(--shadow);
+      padding:24px;
+    }
+
+    h1{
+      margin:0 0 8px 0;
+      font-size:28px;
+    }
+
+    .subtext{
+      margin:0 0 24px 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .top-controls{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:16px;
+      align-items:end;
+      margin-bottom:24px;
+      max-width:600px;
+    }
+
+    label{
+      display:block;
+      margin-bottom:6px;
+      font-weight:bold;
+      font-size:14px;
+    }
+
+    select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:6px;
+      font-size:14px;
+      background:#fff;
+    }
+
+    button{
+      border:none;
+      border-radius:6px;
+      padding:11px 18px;
+      font-size:14px;
+      cursor:pointer;
+      background:var(--primary);
+      color:#fff;
+    }
+
+    button:hover{
+      background:var(--primary-hover);
+    }
+
+    .summary{
+      background:#fafafa;
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:16px;
+      margin-bottom:20px;
+    }
+
+    .summary-grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+    }
+
+    .summary-item{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:6px;
+      padding:12px;
+    }
+
+    .summary-label{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:4px;
+      text-transform:uppercase;
+      letter-spacing:0.3px;
+    }
+
+    .summary-value{
+      font-size:20px;
+      font-weight:bold;
+    }
+
+    .table-wrap{
+      overflow-x:auto;
+      border:1px solid var(--border);
+      border-radius:8px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:900px;
+    }
+
+    thead th{
+      background:var(--header);
+      text-align:left;
+      padding:12px;
+      border-bottom:1px solid var(--border);
+      font-size:14px;
+    }
+
+    tbody td{
+      padding:12px;
+      border-bottom:1px solid #ececec;
+      font-size:14px;
+      vertical-align:top;
+    }
+
+    tbody tr:nth-child(even){
+      background:var(--rowEven);
+    }
+
+    @media (max-width: 760px){
+      .top-controls,
+      .summary-grid{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Manager Staff Job Review</h1>
+      <p class="subtext">Demo manager form to select a staff member and review their recorded jobs.</p>
+
+      <div class="top-controls">
+        <div>
+          <label for="staffSelect">Staff Member</label>
+          <select id="staffSelect">
+            <option value="emma">Emma Johnson</option>
+            <option value="liam">Liam Carter</option>
+            <option value="olivia">Olivia Singh</option>
+          </select>
+        </div>
+        <div>
+          <button type="button" onclick="loadStaffData()">Load Jobs</button>
+        </div>
+      </div>
+
+      <div class="summary">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">Staff Member</div>
+            <div class="summary-value" id="staffName">Emma Johnson</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Total Jobs</div>
+            <div class="summary-value" id="totalJobs">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Latest Job Date</div>
+            <div class="summary-value" id="latestJob">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Work Type</th>
+              <th>NAPA Number</th>
+              <th>Comment / Description</th>
+            </tr>
+          </thead>
+          <tbody id="managerTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const staffData = {
+      emma: {
+        name: "Emma Johnson",
+        jobs: [
+          {
+            date: "2026-02-03",
+            workType: "Simple Switching",
+            napaNumber: "NAPA-2101",
+            comment: "Standard switching activity on morning shift."
+          },
+          {
+            date: "2026-02-16",
+            workType: "Simple Backfeed Switching",
+            napaNumber: "NAPA-2102",
+            comment: "Backfeed support during maintenance outage."
+          },
+          {
+            date: "2026-03-05",
+            workType: "Simple Switching",
+            napaNumber: "NAPA-2103",
+            comment: "Assisted with isolation and restoration."
+          }
+        ]
+      },
+      liam: {
+        name: "Liam Carter",
+        jobs: [
+          {
+            date: "2026-01-28",
+            workType: "Simple Backfeed Switching",
+            napaNumber: "NAPA-2201",
+            comment: "Temporary supply switching for site works."
+          },
+          {
+            date: "2026-02-20",
+            workType: "Simple Switching",
+            napaNumber: "NAPA-2202",
+            comment: "Routine switching as part of scheduled works."
+          }
+        ]
+      },
+      olivia: {
+        name: "Olivia Singh",
+        jobs: [
+          {
+            date: "2026-02-08",
+            workType: "Simple Switching",
+            napaNumber: "NAPA-2301",
+            comment: "Field switching completed successfully."
+          },
+          {
+            date: "2026-02-14",
+            workType: "Simple Switching",
+            napaNumber: "NAPA-2302",
+            comment: "Feeder isolation and job handover."
+          },
+          {
+            date: "2026-03-01",
+            workType: "Simple Backfeed Switching",
+            napaNumber: "NAPA-2303",
+            comment: "Backfeed switching for temporary restoration."
+          },
+          {
+            date: "2026-03-07",
+            workType: "Simple Switching",
+            napaNumber: "NAPA-2304",
+            comment: "Support for planned system work."
+          }
+        ]
+      }
+    };
+
+    function loadStaffData(){
+      const selected = document.getElementById('staffSelect').value;
+      const record = staffData[selected];
+      const tbody = document.getElementById('managerTableBody');
+
+      document.getElementById('staffName').textContent = record.name;
+      document.getElementById('totalJobs').textContent = record.jobs.length;
+      document.getElementById('latestJob').textContent = record.jobs.length
+        ? [...record.jobs].sort((a,b) => b.date.localeCompare(a.date))[0].date
+        : '-';
+
+      tbody.innerHTML = "";
+
+      if(record.jobs.length === 0){
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4">No jobs recorded for this staff member.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      record.jobs.forEach(job => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${job.date}</td>
+          <td>${job.workType}</td>
+          <td>${job.napaNumber}</td>
+          <td>${job.comment}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    loadStaffData();
+  </script>
+</body>
+</html>
