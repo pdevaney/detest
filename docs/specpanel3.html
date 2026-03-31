@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Request Service</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+
+    body {
+      font-family: 'Arimo', Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 30px;
+    }
+
+    form {
+      max-width: 400px;
+      margin: auto;
+      padding: 30px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #CB370F;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'Arimo', Arial, sans-serif;
+    }
+
+    button:hover {
+      background-color: #0069d9;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .message {
+      max-width: 400px;
+      margin: 8px auto;        /* reduced vertical margin */
+      text-align: center;
+      padding: 8px 10px;       /* reduced padding */
+      border-radius: 6px;
+      display: none;
+      font-size: 14px;
+    }
+
+    #sending {
+      background-color: #fff8e1;
+      color: #8a6d3b;
+    }
+
+    #response {
+      background-color: #f0fff4;
+      color: #1b6b22;
+    }
+  </style>
+</head>
+
+<body>
+
+  <form id="dataForm">
+    <input type="hidden" id="form_type" value="2">
+    <input type="hidden" id="form_subtype" value="3">
+
+    <button type="submit" id="submitBtn">
+      Request this service
+    </button>
+  </form>
+
+  <div id="sending" class="message">
+    Sending request…
+  </div>
+
+  <div id="response" class="message">
+    Thank you for your submission. Your request has been sent.
+  </div>
+
+  <script>
+    const iframeSrc = window.location.href;
+
+    function getQueryParamsFromSelf() {
+      const params = {};
+      const usp = new URLSearchParams(window.location.search);
+      for (const [key, value] of usp.entries()) {
+        params[key] = value;
+      }
+      return params;
+    }
+
+    document.getElementById('dataForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      const sendingMsg = document.getElementById('sending');
+      const responseMsg = document.getElementById('response');
+
+      submitBtn.disabled = true;
+      sendingMsg.style.display = 'block';
+
+      const payload = {
+        form_type: document.getElementById('form_type').value,
+        form_subtype: document.getElementById('form_subtype').value,
+        iframe_params: {
+          ...getQueryParamsFromSelf(),
+          iframe_src: iframeSrc
+        },
+        form_details: {}
+      };
+
+      try {
+        await fetch(
+          'https://apim.eu.workato.com/211811_directioneering/form_submission-v1/form_submit',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'api-token': '7283fa530d66f0b81b48eb9a4ce5b56176d7e6388154ca2a273280db379d8775'
+            },
+            body: JSON.stringify(payload)
+          }
+        );
+
+        document.getElementById('dataForm').style.display = 'none';
+        sendingMsg.style.display = 'none';
+        responseMsg.style.display = 'block';
+
+      } catch (error) {
+        sendingMsg.style.display = 'none';
+        submitBtn.disabled = false;
+        alert('There was a problem sending your request. Please try again.');
+      }
+    });
+  </script>
+
+</body>
+</html>
