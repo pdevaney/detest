@@ -107,12 +107,11 @@
       font-family: Arial, sans-serif;
     }
 
-    .btn-primary { background-color: #CB370F; } /* vermilion */
+    .btn-primary { background-color: #CB370F; }
     .btn-primary:hover:enabled { background-color: #A92E0C; }
 
     .btn-secondary { background-color: #6c757d; }
 
-    /* Make disabled buttons clearly inactive */
     .btn:disabled {
       opacity: 1;
       cursor: not-allowed;
@@ -120,8 +119,7 @@
     }
 
     .message {
-      /* CHANGED: now designed to live inside the form */
-      margin: 10px 0 14px 0;
+      margin: 14px 0 0 0;
       padding: 10px 12px;
       border-radius: 6px;
       font-size: 14px;
@@ -129,6 +127,7 @@
       text-align: center;
       box-sizing: border-box;
       font-family: Arial, sans-serif;
+      line-height: 1.4;
     }
 
     .message.error {
@@ -161,32 +160,37 @@
   <input type="hidden" id="form_type" value="4">
   <input type="hidden" id="form_subtype" value="1">
 
-  <div class="options-title">
-    Pick up to 5 dates and times on which you would like to use our office facilities
+  <div id="formContent">
+    <div class="options-title">
+      Pick up to 5 dates and times on which you would like to use our office facilities
+    </div>
+
+    <div id="optionsContainer"></div>
+
+    <button type="button" id="addOptionBtn" class="btn btn-secondary">
+      Add Option
+    </button>
+
+    <div class="requirements-title">
+      Please let our reception staff know if you have any specific requirements for your booking request.
+    </div>
+
+    <textarea id="additional_requirements" placeholder="Optional"></textarea>
+
+    <button type="submit" id="submitBtn" class="btn btn-primary">
+      Submit
+    </button>
   </div>
 
-  <!-- MOVED UP: message area now appears near the top of the form -->
-  <div id="sendingMessage" class="message sending">Sending request…</div>
+  <div id="sendingMessage" class="message sending">
+    Sending request…
+  </div>
+
   <div id="errorMessage" class="message error"></div>
+
   <div id="successMessage" class="message success">
-    Thank you for your submission. Your request has been sent.
+    Thank you for your request. Our reception team has been notified of your request.
   </div>
-
-  <div id="optionsContainer"></div>
-
-  <button type="button" id="addOptionBtn" class="btn btn-secondary">
-    Add Option
-  </button>
-
-  <div class="requirements-title">
-    Please let our reception staff know if you have any specific requirements for your booking request.
-  </div>
-
-  <textarea id="additional_requirements" placeholder="Optional"></textarea>
-
-  <button type="submit" id="submitBtn" class="btn btn-primary">
-    Submit
-  </button>
 </form>
 
 <script>
@@ -225,7 +229,7 @@
   function isWeekend(isoDateStr) {
     const [y, m, d] = isoDateStr.split("-").map(Number);
     const dt = new Date(y, m - 1, d);
-    const day = dt.getDay(); // 0=Sun, 6=Sat
+    const day = dt.getDay();
     return day === 0 || day === 6;
   }
 
@@ -235,15 +239,13 @@
     picked.setHours(0,0,0,0);
     const today = new Date();
     today.setHours(0,0,0,0);
-    return picked <= today; // blocks today and past
+    return picked <= today;
   }
 
   function showError(msg) {
     const el = document.getElementById("errorMessage");
     el.textContent = msg;
     el.style.display = "block";
-
-    // NEW: bring it into view so it's never "off screen"
     el.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -267,11 +269,12 @@
   }
 
   function setDateRules(dateInput) {
-    // future-only: set min to tomorrow (not today)
     const now = new Date();
     now.setHours(0,0,0,0);
+
     const tomorrow = new Date(now);
     tomorrow.setDate(now.getDate() + 1);
+
     dateInput.min = toISODate(tomorrow);
 
     dateInput.addEventListener("change", () => {
@@ -322,7 +325,6 @@
     setDateRules(dateInput);
 
     optionsContainer.appendChild(box);
-
     updateAddButtonState();
   }
 
@@ -344,7 +346,6 @@
     renderOption();
   };
 
-  // Start with one option
   renderOption();
 
   document.getElementById("dataForm").addEventListener("submit", async e => {
@@ -356,7 +357,7 @@
     for (const box of optionsContainer.children) {
       const date = box.querySelector('input[type="date"]').value;
       const from = box.querySelectorAll("select")[0].value;
-      const to   = box.querySelectorAll("select")[1].value;
+      const to = box.querySelectorAll("select")[1].value;
 
       if (!date || !from || !to) {
         showError("Please complete Date, From, and To for all options.");
@@ -369,7 +370,7 @@
       }
 
       if (toMinutes(to) <= toMinutes(from)) {
-        showError(`"To" time must be later than "From" time.`);
+        showError('"To" time must be later than "From" time.');
         return;
       }
 
@@ -405,9 +406,10 @@
         }
       );
 
-      document.getElementById("dataForm").style.display = "none";
+      document.getElementById("formContent").style.display = "none";
       document.getElementById("sendingMessage").style.display = "none";
       document.getElementById("successMessage").style.display = "block";
+
     } catch {
       document.getElementById("submitBtn").disabled = false;
       document.getElementById("sendingMessage").style.display = "none";
